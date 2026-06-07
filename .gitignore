@@ -1,0 +1,22 @@
+# Task 2 binary input files (256 .data files — keep locally, do not commit)
+*.data
+
+# Node.js dependencies
+node_modules/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and temp
+*.log
+npm-debug.log*
+.env
+.env.*
