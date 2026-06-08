@@ -1,15 +1,24 @@
 {
-  "name": "task3",
+  "name": "task3-lcm-server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Express HTTP server that computes the LCM of two natural numbers via a GET endpoint",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "express",
+    "lcm",
+    "gcd",
+    "nodejs",
+    "itransition"
+  ],
+  "author": "Maxat Kaliyev",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "express": "^5.2.1"
   }
