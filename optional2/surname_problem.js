@@ -1,22 +1,11 @@
 'use strict';
 /**
- * surname-levenshtein-outlier.js — Maximum Average Levenshtein Distance Outlier Finder
+ * surname_problem.js — Maximum Average Levenshtein Distance Outlier Finder
  *
  * Finds the surname that differs the most from all others in a large corpus.
  *
- * Strategy:
- *   1. Load all surnames from in.txt (one per line).
- *   2. Build a stratified random sample of SAMPLE_SIZE reference names
- *      (stratified by length so every length-bucket is represented).
- *   3. Split the full list across os.cpus().length Worker threads; each
- *      worker computes the average Levenshtein distance from its slice to
- *      every name in the reference sample.
- *   4. The name with the highest average score is the statistical outlier.
- *
  * Usage:
- *   node surname-levenshtein-outlier.js [path/to/in.txt]
- *
- * Complexity:  O(N × S × L²)  where S = sample size, L = avg string length.
+ *   node optional2/surname_problem.js [path/to/in.txt]
  */
 
 const fs      = require('fs');
