@@ -32,8 +32,13 @@ export default function Register() {
       login(data.token, data.user);
       navigate('/', { replace: true });
     } catch (err) {
-      // Backend sends "This email is already taken." for error code 23505.
-      setError(err.response?.data?.message || 'Registration failed.');
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.request) {
+        setError('Cannot reach the API server. Check that the backend is running.');
+      } else {
+        setError('Registration failed.');
+      }
     } finally {
       setLoading(false);
     }
