@@ -29,7 +29,13 @@ export default function Login() {
       login(data.token, data.user);
       navigate('/', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed.');
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.request) {
+        setError('Cannot reach the API server. Check that the backend is running.');
+      } else {
+        setError('Login failed.');
+      }
     } finally {
       setLoading(false);
     }
