@@ -1,6 +1,9 @@
 # Task 2 binary input files (256 .data files — keep locally, do not commit)
 *.data
 
+# Optional task 2 surname dataset (keep locally, do not commit)
+optional2/in.txt
+
 # Node.js dependencies
 node_modules/
 
