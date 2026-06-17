@@ -1,0 +1,24 @@
+# Render Blueprint for the Express + TypeScript backend.
+#
+# NOTE: This repo is a monorepo (itransition-tasks); the backend lives at
+# `task5/backend`. Paths below are relative to the REPOSITORY ROOT.
+#   - To use this as a Blueprint, place/keep a copy of this file at the repo
+#     root and point Render's Blueprint at the repo.
+#   - To deploy manually (simplest for a monorepo), create a Web Service in the
+#     Render dashboard and set "Root Directory" to `task5/backend`, with the
+#     same build/start commands shown here.
+services:
+  - type: web
+    name: music-store-backend
+    runtime: node
+    plan: free
+    rootDir: task5/backend
+    # --include=dev guarantees TypeScript/@types are installed even if Render
+    # sets NODE_ENV=production, so `tsc` (npm run build) always succeeds.
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"

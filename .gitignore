@@ -23,3 +23,6 @@ Desktop.ini
 npm-debug.log*
 .env
 .env.*
+
+# Secrets — DB connection config for the Postgres language server (contains credentials)
+postgres-language-server.jsonc
