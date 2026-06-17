@@ -4,6 +4,11 @@
 # Optional task 2 surname dataset (keep locally, do not commit)
 optional2/in.txt
 
+# Optional task 4 — downloaded/generated ML artifacts (recreated by solve-digits.py)
+optional4/mnist_data/
+optional4/mnist_cnn.pth
+optional4/digits.zip
+
 # Node.js dependencies
 node_modules/
 

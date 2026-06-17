@@ -2,13 +2,26 @@
 
 Репозиторий с решениями практических заданий в рамках **промышленной практики (industrial training)** программы **Itransition Frontend Internship**.
 
-Три независимых задания на JavaScript/Node.js:
+---
 
-| # | Задание | Технологии |
-|---|---------|------------|
-| 1 | [Longest Common Substring (Code Golf)](task1-lcs/) | Чистый Node.js |
-| 2 | [Пакетное SHA3-256 хеширование](task2-hashing/) | `crypto`, `BigInt` |
-| 3 | [LCM Web Server](task3/) | Express, HTTP API |
+## Обзор
+
+| # | Задание | Папка | Технологии |
+|---|---------|-------|------------|
+| 1 | Longest Common Substring (Code Golf) | [`task1-lcs/`](task1-lcs/) | Чистый Node.js |
+| 2 | Пакетное SHA3-256 хеширование | [`task2-hashing/`](task2-hashing/) | `crypto`, `BigInt` |
+| 3 | LCM Web Server | [`task3/`](task3/) | Express, HTTP API |
+| 4 | User Management Admin Panel | [`task4/`](task4/) | React, Express, PostgreSQL, JWT |
+| 5 | Soundforge — Procedural Music Store | [`task5/`](task5/) | React + TS, Express + TS, Web Audio |
+
+### Дополнительные задания (optional)
+
+| # | Задание | Папка | Технологии |
+|---|---------|-------|------------|
+| 1 | Quine Relay (5 языков) | [`optional1/`](optional1/) | JS → Python → TS → Java → C# |
+| 2 | Max-Min Levenshtein Outlier | [`optional2/`](optional2/) | Node.js, `worker_threads` |
+| 3 | Hex Divisibility Puzzle | [`optional3/`](optional3/) | Node.js, `BigInt` backtracking |
+| 4 | Digit Image Classification | [`optional4/`](optional4/) | Python, PyTorch, MNIST CNN |
 
 ---
 
@@ -19,17 +32,35 @@ itransition-tasks/
 ├── README.md
 ├── .gitignore
 ├── task1-lcs/
-│   └── lcs.js              # Задание 1: Longest Common Substring (Code Golf)
+│   └── lcs.js
 ├── task2-hashing/
-│   ├── task2.js            # Задание 2: SHA3-256 + сортировка по BigInt-ключу
-│   └── *.data              # 256 бинарных файлов (локально, не в Git)
-└── task3/
-    ├── server.js           # Задание 3: Express LCM endpoint
-    ├── package.json
-    └── README.md
+│   └── task2.js              # *.data — локально, не в Git
+├── task3/
+│   ├── server.js
+│   ├── package.json
+│   └── README.md
+├── task4/
+│   ├── backend/                # Express + PostgreSQL + JWT
+│   └── frontend/               # React + Vite + Tailwind
+├── task5/
+│   ├── backend/                # Express API, seeded generation
+│   └── frontend/               # React SPA (table + gallery)
+├── optional1/
+│   ├── build_quine.js          # генератор quine-relay
+│   ├── quine.js                # самовоспроизводящаяся цепочка
+│   └── verify.js               # end-to-end верификатор
+├── optional2/
+│   └── surname_problem.js      # in.txt — локально, не в Git
+├── optional3/
+│   ├── solve-puzzle.js
+│   └── README.md
+└── optional4/
+    ├── solve-digits.py
+    ├── requirements.txt
+    └── README.md               # mnist_data/, weights — локально
 ```
 
-> **Примечание:** файлы `*.data` должны лежать в папке `task2-hashing/` при запуске скрипта, но **не коммитятся** в репозиторий (см. `.gitignore`).
+> **Примечание:** бинарные входные данные (`*.data`, `in.txt`, MNIST-кэш, веса модели) **не коммитятся** — см. [`.gitignore`](.gitignore).
 
 ---
 
@@ -37,36 +68,11 @@ itransition-tasks/
 
 **Папка:** [`task1-lcs/`](task1-lcs/)
 
-### Задача
-
-Найти **наибольшую общую подстроку** (Longest Common Substring, LCS) среди нескольких строк, переданных через аргументы командной строки.
-
-### Алгоритм
-
-1. Берётся первая строка `s` как эталон для перебора.
-2. Для каждой пары индексов `(i, j)` формируется кандидат `t = s.slice(i, j)`.
-3. Кандидат принимается, только если **каждая** входная строка содержит `t` (проверка через `.every()`).
-4. Среди принятых кандидатов выбирается самый длинный (сравнение через `t[r.length]` — непустой символ на позиции длины текущего рекорда).
-
-Перебор идёт по возрастанию длины подстроки (внешний цикл по `i`, внутренний по `j`), поэтому при нахождении более длинного совпадения результат автоматически обновляется.
-
-### Оптимизация под Code Golf (~141 байт)
-
-Решение сжато до минимума за счёт:
-
-| Приём | Назначение |
-|-------|------------|
-| Деструктуризация `argv` | `[,,...a]=process.argv` — сразу получить массив аргументов |
-| Короткие имена переменных | `r`, `i`, `j`, `t` вместо многословных идентификаторов |
-| Short-circuit в условии | `a.every(x=>x.includes(t))&&t[r.length]&&(r=t)` — цепочка `&&` без `if` |
-| `.every()` | Лаконичная проверка «подстрока есть во всех строках» |
-| `t[r.length]` | Проверка «кандидат длиннее текущего рекорда» одним выражением |
-
-### Запуск
+Найти **наибольшую общую подстроку** среди строк, переданных через аргументы командной строки. Решение сжато до ~141 байт (code golf).
 
 ```bash
 node task1-lcs/lcs.js "abcdef" "zbcdxy" "abcef"
-# Вывод: bcd
+# bcd
 ```
 
 ---
@@ -75,48 +81,11 @@ node task1-lcs/lcs.js "abcdef" "zbcdxy" "abcef"
 
 **Папка:** [`task2-hashing/`](task2-hashing/)
 
-### Задача
-
-Обработать **256 бинарных файлов** `file_XX.data` (шестнадцатеричные имена), вычислить для каждого хеш **SHA3-256**, отсортировать хеши по специальному числовому ключу и получить итоговый хеш от конкатенации отсортированных значений и email.
-
-### Алгоритм
-
-1. **Сканирование каталога** — читаются все файлы с расширением `.data` в текущей папке; ожидается ровно 256 штук.
-2. **Хеширование** — для каждого файла через модуль Node.js [`crypto`](https://nodejs.org/api/crypto.html):
-   ```js
-   crypto.createHash('sha3-256').update(buffer).digest('hex')
-   ```
-   SHA3-256 (Keccak) даёт 64-символьную hex-строку на файл.
-3. **Ключ сортировки** — для каждого хеша вычисляется произведение:
-   ```
-   sortKey = ∏ (digit + 1)   для каждой hex-цифры digit ∈ [0..f]
-   ```
-   Например, для цифры `'a'` (10) множитель равен `11`.
-4. **Сортировка** — массив хешей сортируется по возрастанию `sortKey`.
-5. **Финальный хеш** — конкатенация всех отсортированных хешей + email, затем снова SHA3-256.
-
-### Почему обязателен `BigInt`
-
-Ключ сортировки — **произведение до 64 множителей**, каждый до 16. Даже грубая оценка даёт порядок \(16^{64}\) — это на десятки порядков больше `Number.MAX_SAFE_INTEGER` (\(2^{53} - 1\)). Обычный `number` в JavaScript потеряет точность, и сортировка станет **неверной**.
-
-`BigInt` (`1n`, `BigInt(...)`) хранит целые числа произвольной величины и гарантирует корректное сравнение ключей:
-
-```js
-let product = 1n;
-for (const ch of hash) {
-  product *= BigInt(parseInt(ch, 16) + 1);
-}
-```
-
-### Запуск
-
-Поместите 256 файлов `file_00.data` … `file_ff.data` в `task2-hashing/` и выполните:
+Обработать **256 бинарных файлов** `file_XX.data`, вычислить SHA3-256, отсортировать по специальному `BigInt`-ключу и получить итоговый хеш.
 
 ```bash
 node task2-hashing/task2.js
 ```
-
-Скрипт выведет одну строку — итоговый SHA3-256 хеш.
 
 ---
 
@@ -124,65 +93,111 @@ node task2-hashing/task2.js
 
 **Папка:** [`task3/`](task3/) · Подробнее: [`task3/README.md`](task3/README.md)
 
-### Задача
-
-Реализовать HTTP-сервер с **одним GET-эндпоинтом**, который принимает два query-параметра `x` и `y`, проверяет, что оба — **натуральные числа** (целые > 0), и возвращает их **наименьшее общее кратное (LCM)** в виде plain text.
-
-### Эндпоинт
-
-```
-GET /:emailSlug?x=<number>&y=<number>
-```
-
-| Параметр | Расположение | Описание |
-|----------|--------------|----------|
-| `emailSlug` | path | Произвольный сегмент пути (slug из email) |
-| `x`, `y` | query | Натуральные числа для вычисления LCM |
-
-**Валидация:** если параметр отсутствует, не является числом, равен нулю, отрицателен или дробный — сервер возвращает строку `NaN` (plain text, без JSON и HTML).
-
-### Алгоритм
-
-1. **GCD** — алгоритм Евклида: `(a, b) → (b, a % b)` до `b = 0`.
-2. **LCM** — `lcm(a, b) = (a / gcd(a, b)) * b`.
-
-### Примеры
+HTTP-сервер с эндпоинтом `GET /:emailSlug?x=<n>&y=<n>`, возвращающим LCM двух натуральных чисел (plain text).
 
 ```bash
-curl "http://localhost:3000/john_doe_example_com?x=15&y=20"
-# 60
-
-curl "http://localhost:3000/user?x=0&y=5"
-# NaN
+cd task3 && npm install && npm start
+curl "http://localhost:3000/user?x=15&y=20"   # 60
 ```
 
-| Запрос | Ответ |
-|--------|-------|
-| `?x=15&y=20` | `60` |
-| `?x=12&y=18` | `36` |
-| `?x=0&y=5` | `NaN` |
-| `?x=1.5&y=5` | `NaN` |
-| `?x=4` (без `y`) | `NaN` |
+---
 
-### Запуск
+## Задание 4 — User Management Admin Panel
+
+**Папка:** [`task4/`](task4/) · Подробнее: [`task4/README.md`](task4/README.md)
+
+Full-stack приложение: регистрация/логин, JWT-аутентификация, CRUD пользователей, блокировка, верификация email.
+
+| Слой | Стек |
+|------|------|
+| Frontend | React 18, Vite, Tailwind, React Router |
+| Backend | Node.js, Express, JWT, bcryptjs |
+| Database | PostgreSQL |
 
 ```bash
-cd task3
-npm install
-npm start
+# backend (порт 5000)
+cd task4/backend && npm install && npm start
+
+# frontend (порт 5173)
+cd task4/frontend && npm install && npm run dev
 ```
 
-Сервер слушает порт **3000**.
+---
+
+## Задание 5 — Soundforge (Procedural Music Store)
+
+**Папка:** [`task5/`](task5/) · Подробнее: [`task5/README.md`](task5/README.md)
+
+SPA-витрина музыкального магазина с **детерминированной** генерацией песен на сервере: обложки (SVG), аудио (Web Audio API), тексты, отзывы. Независимые параметры seed / locale / likes через вложенные RNG.
+
+```bash
+cd task5/backend && npm install && npm run dev    # :4000
+cd task5/frontend && npm install && npm run dev   # :5173
+```
+
+Деплой: backend → Render (`render.yaml`), frontend → Vercel (`vercel.json`).
+
+---
+
+## Optional 1 — Quine Relay (5 языков)
+
+**Папка:** [`optional1/`](optional1/)
+
+Самовоспроизводящаяся цепочка: **JS → Python → TypeScript → Java → C# → JS**. Каждый этап выводит исходный код следующего.
+
+```bash
+node optional1/quine.js          # запуск relay
+node optional1/verify.js         # полная верификация цепочки
+node optional1/build_quine.js    # пересборка quine.js
+```
+
+---
+
+## Optional 2 — Max-Min Levenshtein Outlier
+
+**Папка:** [`optional2/`](optional2/)
+
+Найти фамилию, **максимально отличающуюся от каждой другой** (maximize minimum Levenshtein distance). Параллельная обработка через `worker_threads`.
+
+```bash
+node optional2/surname_problem.js path/to/in.txt
+```
+
+---
+
+## Optional 3 — Hex Divisibility Puzzle
+
+**Папка:** [`optional3/`](optional3/) · Подробнее: [`optional3/README.md`](optional3/README.md)
+
+Найти самое длинное hex-число, где каждый префикс длины `k` удовлетворяет `value % k === k − 1`. Средняя цифра ответа — `3`.
+
+```bash
+node optional3/solve-puzzle.js
+```
+
+---
+
+## Optional 4 — Digit Image Classification
+
+**Папка:** [`optional4/`](optional4/) · Подробнее: [`optional4/README.md`](optional4/README.md)
+
+CNN на PyTorch: обучение на MNIST, классификация изображений из `digits.zip`, вывод массива счётчиков цифр 0–9.
+
+```bash
+cd optional4
+pip install -r requirements.txt
+python solve-digits.py
+```
 
 ---
 
 ## Требования
 
-| | Задания 1–2 | Задание 3 |
-|---|-------------|-----------|
-| **Node.js** | 18+ | 18+ |
-| **Зависимости** | встроенные модули | `npm install` (Express) |
-| **Запуск** | `node <файл>` | `npm start` в `task3/` |
+| | Задания 1–2, optional 1–3 | Задание 3 | Задания 4–5 | Optional 4 |
+|---|---------------------------|-----------|-------------|------------|
+| **Runtime** | Node.js 18+ | Node.js 18+ | Node.js 18+ | Python 3.10+ |
+| **Зависимости** | встроенные модули | `npm install` | `npm install` | `pip install -r requirements.txt` |
+| **БД** | — | — | PostgreSQL (task 4) | — |
 
 ---
 
