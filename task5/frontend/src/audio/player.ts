@@ -18,6 +18,20 @@ interface ScheduledNote {
   duration: number; // seconds
 }
 
+/**
+ * Unlock / resume the Web Audio context. MUST be awaited from within a user
+ * gesture (e.g. a click handler) before any synthesis happens. Production
+ * browsers (HTTPS) start the AudioContext "suspended" and will silently drop
+ * audio unless it is resumed in direct response to a user interaction.
+ */
+export async function unlockAudio(): Promise<void> {
+  await Tone.start();
+  const ctx = Tone.getContext();
+  if (ctx.state !== "running") {
+    await ctx.resume();
+  }
+}
+
 function buildSchedule(
   events: AudioSpec["melody"],
   secondsPerBeat: number
@@ -44,6 +58,7 @@ export class SongPlayer {
   private spec: AudioSpec;
   private lead: Tone.PolySynth | null = null;
   private bass: Tone.Synth | null = null;
+  private reverb: Tone.Reverb | null = null;
   private leadPart: Tone.Part | null = null;
   private bassPart: Tone.Part | null = null;
   private loopLength = 0;
@@ -68,7 +83,9 @@ export class SongPlayer {
 
   async play() {
     if (this.isPlaying) return;
-    await Tone.start();
+    // Idempotent safety: the caller already unlocks the context inside the
+    // click gesture, but ensure it is running before we synthesize anything.
+    await unlockAudio();
 
     const transport = Tone.getTransport();
     const secondsPerBeat = 60 / this.spec.bpm;
@@ -83,8 +100,18 @@ export class SongPlayer {
       volume: -8,
     }).toDestination();
 
-    const reverb = new Tone.Reverb({ decay: 2.5, wet: 0.25 }).toDestination();
-    this.lead.connect(reverb);
+    // Reverb generates its impulse response asynchronously. Await it so the
+    // node is ready before scheduling; if generation fails (some production
+    // environments), continue with the dry signal instead of going silent.
+    try {
+      const reverb = new Tone.Reverb({ decay: 2.5, wet: 0.25 });
+      await reverb.generate();
+      reverb.toDestination();
+      this.lead.connect(reverb);
+      this.reverb = reverb;
+    } catch (err) {
+      console.warn("Reverb unavailable, playing dry signal:", err);
+    }
 
     this.bass = new Tone.Synth({
       oscillator: { type: this.oscType(this.spec.bassSynth) },
@@ -120,10 +147,12 @@ export class SongPlayer {
     this.bassPart?.dispose();
     this.lead?.dispose();
     this.bass?.dispose();
+    this.reverb?.dispose();
     this.leadPart = null;
     this.bassPart = null;
     this.lead = null;
     this.bass = null;
+    this.reverb = null;
     this.isPlaying = false;
   }
 

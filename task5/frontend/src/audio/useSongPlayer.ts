@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AudioSpec } from "../types";
-import { SongPlayer } from "./player";
+import { SongPlayer, unlockAudio } from "./player";
 
 // Module-level reference so only ONE song plays at a time across the whole app.
 let activeStop: (() => void) | null = null;
@@ -34,13 +34,21 @@ export function useSongPlayer(spec: AudioSpec) {
   };
 
   const play = async () => {
-    if (activeStop && activeStop !== stop) activeStop();
-    const player = new SongPlayer(spec);
-    playerRef.current = player;
-    activeStop = stop;
-    await player.play();
-    setIsPlaying(true);
-    rafRef.current = requestAnimationFrame(tick);
+    try {
+      // Resume the AudioContext FIRST, while we are still synchronously inside
+      // the click gesture. This is what makes audio work on production HTTPS.
+      await unlockAudio();
+      if (activeStop && activeStop !== stop) activeStop();
+      const player = new SongPlayer(spec);
+      playerRef.current = player;
+      activeStop = stop;
+      await player.play();
+      setIsPlaying(true);
+      rafRef.current = requestAnimationFrame(tick);
+    } catch (err) {
+      console.error("Audio playback failed:", err);
+      stop();
+    }
   };
 
   const toggle = () => {
