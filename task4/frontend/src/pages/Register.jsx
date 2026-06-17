@@ -97,8 +97,7 @@ export default function Register() {
                 value={form.password}
                 onChange={handleChange}
                 required
-                minLength={6}
-                placeholder="Min. 6 characters"
+                placeholder="Password"
                 className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
               />
             </div>
