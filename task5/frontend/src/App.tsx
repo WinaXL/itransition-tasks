@@ -83,7 +83,7 @@ export function App() {
   }, []);
 
   return (
-    <div className="app">
+    <div className="mx-auto w-full max-w-7xl px-4 pb-24 sm:px-6">
       <Toolbar
         locale={locale}
         seed={seed}
@@ -96,9 +96,13 @@ export function App() {
         onView={setView}
       />
 
-      {error && <div className="error-banner">⚠ {error}</div>}
+      {error && (
+        <div className="mb-4 rounded-xl border border-rose-500/60 bg-rose-500/15 px-4 py-3 text-sm text-rose-300">
+          ⚠ {error}
+        </div>
+      )}
 
-      <main className="content">
+      <main>
         {view === "table" ? (
           <TableView
             songs={tableSongs}

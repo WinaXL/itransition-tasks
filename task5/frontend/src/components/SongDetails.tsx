@@ -10,7 +10,6 @@ interface Props {
 export function SongDetails({ song, showCover = true }: Props) {
   const { isPlaying, position, toggle } = useSongPlayer(song.audio);
 
-  // Determine the currently active lyric line based on playback position.
   const activeLine = useMemo(() => {
     if (!isPlaying) return -1;
     let active = 0;
@@ -33,36 +32,68 @@ export function SongDetails({ song, showCover = true }: Props) {
     }
   }, [activeLine]);
 
+  const loop = song.audio;
+  const badges = [`${loop.bpm} BPM`, loop.scaleName, `${loop.rootNote} root`, loop.leadSynth];
+
   return (
-    <div className="song-details">
+    <div className="flex flex-col gap-5 p-5 lg:flex-row">
       {showCover && (
-        <div className="detail-cover">
-          <img src={song.coverDataUri} alt={`${song.title} cover`} />
+        <div className="shrink-0">
+          <img
+            src={song.coverDataUri}
+            alt={`${song.title} cover`}
+            className="aspect-square w-full rounded-xl shadow-lg shadow-black/50 lg:w-56"
+          />
         </div>
       )}
 
-      <div className="detail-main">
-        <div className="player-bar">
-          <button type="button" className={`play-btn ${isPlaying ? "playing" : ""}`} onClick={toggle}>
-            {isPlaying ? "⏸ Stop" : "▶ Play"}
+      <div className="min-w-0 flex-1">
+        {/* Player bar */}
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={toggle}
+            className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-lg transition active:scale-95 ${
+              isPlaying
+                ? "bg-rose-500 shadow-rose-500/30 hover:bg-rose-600"
+                : "bg-gradient-to-r from-brand-500 to-accent-500 shadow-brand-500/30 hover:brightness-110"
+            }`}
+          >
+            <span className="text-base leading-none">{isPlaying ? "⏸" : "▶"}</span>
+            {isPlaying ? "Stop" : "Play"}
           </button>
-          <div className="track-meta">
-            <span className="badge">{song.audio.bpm} BPM</span>
-            <span className="badge">{song.audio.scaleName}</span>
-            <span className="badge">{song.audio.rootNote} root</span>
-            <span className="badge">{song.audio.leadSynth}</span>
+          <div className="flex flex-wrap gap-1.5">
+            {badges.map((b) => (
+              <span
+                key={b}
+                className="rounded-md border border-zinc-700/70 bg-zinc-800/60 px-2.5 py-1 text-xs font-semibold text-zinc-300"
+              >
+                {b}
+              </span>
+            ))}
           </div>
         </div>
 
-        <div className="lyrics-panel">
-          <h4>Lyrics {isPlaying ? "♪" : ""}</h4>
-          <div className="lyrics-scroll" ref={lyricsRef}>
+        {/* Lyrics */}
+        <div className="mb-4">
+          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-zinc-200">
+            Lyrics
+            {isPlaying && <span className="text-accent-400 animate-pulse">♪</span>}
+          </h4>
+          <div
+            ref={lyricsRef}
+            className="scroll-thin h-40 overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-950/60 px-5 py-3"
+          >
             {song.lyrics.map((line, i) => (
               <p
                 key={i}
                 ref={i === activeLine ? activeRef : null}
-                className={`lyric-line ${i === activeLine ? "active" : ""} ${
-                  i < activeLine ? "passed" : ""
+                className={`my-1.5 transition-all duration-300 ${
+                  i === activeLine
+                    ? "translate-x-1 text-lg font-bold text-accent-400"
+                    : i < activeLine
+                    ? "text-base text-zinc-600"
+                    : "text-base text-zinc-500"
                 }`}
               >
                 {line.text}
@@ -71,18 +102,23 @@ export function SongDetails({ song, showCover = true }: Props) {
           </div>
         </div>
 
-        <div className="reviews-panel">
-          <h4>
-            Reviews <span className="muted">({song.reviewCount})</span> · ❤ {song.likes}
+        {/* Reviews */}
+        <div>
+          <h4 className="mb-2 text-sm font-semibold text-zinc-200">
+            Reviews <span className="font-normal text-zinc-500">({song.reviewCount})</span>
+            <span className="ml-2 font-normal text-zinc-400">❤ {song.likes}</span>
           </h4>
           {song.reviews.length === 0 ? (
-            <p className="muted">No reviews yet.</p>
+            <p className="text-sm text-zinc-500">No reviews yet.</p>
           ) : (
-            <ul className="reviews">
+            <ul className="flex flex-col gap-2">
               {song.reviews.map((r, i) => (
-                <li key={i}>
-                  <span className="review-author">{r.author}</span>
-                  <span className="review-text">{r.text}</span>
+                <li
+                  key={i}
+                  className="rounded-lg border border-zinc-800 bg-zinc-800/40 px-3.5 py-2.5"
+                >
+                  <span className="block text-xs font-bold text-brand-400">{r.author}</span>
+                  <span className="text-sm text-zinc-200">{r.text}</span>
                 </li>
               ))}
             </ul>

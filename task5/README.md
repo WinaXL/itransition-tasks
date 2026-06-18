@@ -5,7 +5,7 @@ A single-page application that simulates a music-store showcase by generating
 paginated batches; all generation is in-memory and fully reproducible from a
 seed.
 
-- **Frontend:** React + TypeScript + Vite + Tone.js (deploy on Vercel)
+- **Frontend:** React + TypeScript + Vite + Tailwind CSS, Web Audio API (deploy on Vercel)
 - **Backend:** Node.js + Express + TypeScript, `@faker-js/faker`, `seedrandom` (deploy on Render)
 - **Storage:** none required for generation (in-memory). PostgreSQL/Supabase is
   only needed if you later add localization lookup tables.
@@ -61,9 +61,11 @@ or white noise. The real title and artist are embedded. See `backend/src/cover.t
 ### Procedural audio
 
 The server emits a deterministic `AudioSpec` (BPM, root/scale, synth timbres,
-melody + bass note events). The client plays it with **Tone.js**, so the same
-seed always yields the same track, with tempo and melody variation per song. See
-`backend/src/audio.ts` and `frontend/src/audio/player.ts`.
+melody + bass note events). The client renders it with the native **Web Audio
+API** (oscillator + gain voices via a look-ahead scheduler), so the same seed
+always yields the same track, with tempo and melody variation per song, and it
+works consistently across browsers. See `backend/src/audio.ts` and
+`frontend/src/audio/player.ts`.
 
 ### Synced lyrics
 
