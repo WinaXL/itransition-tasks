@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Song } from "../types";
 import { SongDetails } from "./SongDetails";
+import { CoverArt } from "./CoverArt";
 
 interface Props {
   songs: Song[];
@@ -34,36 +35,19 @@ export function GalleryView({ songs, loading, onLoadMore }: Props) {
             key={song.index}
             className="flex flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 shadow-lg shadow-black/30 transition hover:border-zinc-700"
           >
-            <div className="relative">
-              <img
-                src={song.coverDataUri}
-                alt={`${song.title} cover`}
-                loading="lazy"
-                className="aspect-square w-full object-cover"
-              />
-              <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-0.5 text-xs font-bold text-white backdrop-blur">
-                #{song.index}
-              </span>
-              <span className="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur">
-                ❤ {song.likes}
-              </span>
-            </div>
+            <CoverArt cover={song.cover} title={song.title} artist={song.artist} />
 
-            <div className="px-5 pt-4">
-              <h3 className="truncate text-lg font-extrabold text-zinc-100" title={song.title}>
-                {song.title}
-              </h3>
-              <p className="truncate text-sm text-zinc-400" title={song.artist}>
-                {song.artist}
-              </p>
-              <div className="mt-2 flex items-center gap-2 overflow-hidden">
-                <span className="shrink-0 rounded-full bg-brand-500/15 px-2.5 py-0.5 text-xs font-semibold text-brand-400">
-                  {song.genre}
-                </span>
-                <span className="truncate text-xs text-zinc-500" title={song.album}>
-                  {song.album}
-                </span>
-              </div>
+            <div className="flex items-center justify-between gap-2 px-5 pt-3">
+              <span className="font-mono text-xs text-zinc-500">#{song.index}</span>
+              <span className="text-xs font-semibold text-zinc-300">❤ {song.likes}</span>
+            </div>
+            <div className="mt-1 flex items-center gap-2 overflow-hidden px-5">
+              <span className="shrink-0 rounded-full bg-brand-500/15 px-2.5 py-0.5 text-xs font-semibold text-brand-400">
+                {song.genre}
+              </span>
+              <span className="truncate text-xs text-zinc-500" title={song.album}>
+                {song.album}
+              </span>
             </div>
 
             <div className="mt-1 border-t border-zinc-800/60">

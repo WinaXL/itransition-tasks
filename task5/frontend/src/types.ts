@@ -15,6 +15,13 @@ export interface AudioSpec {
   bars: number;
 }
 
+export interface Cover {
+  imageUrl: string;
+  fallbackUrl: string;
+  theme: string;
+  style: number;
+}
+
 export interface Review {
   author: string;
   text: string;
@@ -32,8 +39,7 @@ export interface Song {
   album: string;
   artist: string;
   genre: string;
-  coverSvg: string;
-  coverDataUri: string;
+  cover: Cover;
   audio: AudioSpec;
   lyrics: LyricLine[];
   likes: number;

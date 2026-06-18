@@ -51,12 +51,17 @@ the average and bumps it up by one with probability equal to the fractional part
 (e.g. `4.7` → `5` with p=0.7, else `4`). Over a batch this averages to the target,
 and the displayed value is always an integer. See `backend/src/likes.ts`.
 
-### Procedural cover images
+### Album cover images
 
-Covers are rendered as **SVG** (returned both as raw markup and a base64 data
-URI). Four distinct pattern styles (scattered circles, diagonal stripes,
-triangular mosaic, concentric rings) over curated palettes — no plain gradients
-or white noise. The real title and artist are embedded. See `backend/src/cover.ts`.
+Each song gets a **real, photographic** cover. The server deterministically
+picks a theme keyword (lake, clouds, dog, people, city, retro, …) from the
+song's cover RNG and builds a [LoremFlickr](https://loremflickr.com) URL locked
+to a seed-derived number, so the same song always yields the same photo
+(`backend/src/cover.ts`). A seeded Picsum URL is provided as a fallback. The
+title/artist are overlaid on the client by `frontend/src/components/CoverArt.tsx`,
+which renders one of **five distinct typography styles** (minimalist scrim,
+brutalist block, glassmorphism card, elegant serif header, accent-bar) — also
+chosen deterministically per seed — for highly varied artwork across the catalog.
 
 ### Procedural audio
 

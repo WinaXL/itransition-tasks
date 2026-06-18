@@ -1,4 +1,5 @@
 import { AudioSpec } from "./audio";
+import { Cover } from "./cover";
 
 export interface Review {
   author: string;
@@ -18,8 +19,7 @@ export interface Song {
   album: string;
   artist: string;
   genre: string;
-  coverSvg: string;
-  coverDataUri: string;
+  cover: Cover;
   audio: AudioSpec;
   lyrics: LyricLine[];
   likes: number;

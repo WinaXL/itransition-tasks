@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Song } from "../types";
 import { useSongPlayer } from "../audio/useSongPlayer";
+import { CoverArt } from "./CoverArt";
 
 interface Props {
   song: Song;
@@ -38,11 +39,12 @@ export function SongDetails({ song, showCover = true }: Props) {
   return (
     <div className="flex flex-col gap-5 p-5 lg:flex-row">
       {showCover && (
-        <div className="shrink-0">
-          <img
-            src={song.coverDataUri}
-            alt={`${song.title} cover`}
-            className="aspect-square w-full rounded-xl shadow-lg shadow-black/50 lg:w-56"
+        <div className="w-full shrink-0 lg:w-56">
+          <CoverArt
+            cover={song.cover}
+            title={song.title}
+            artist={song.artist}
+            className="rounded-xl shadow-lg shadow-black/50"
           />
         </div>
       )}

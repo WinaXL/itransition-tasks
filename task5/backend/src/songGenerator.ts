@@ -1,6 +1,6 @@
 import { Rng, makeRng } from "./rng";
 import { getBank, LocaleId } from "./locales";
-import { generateCoverSvg, svgToDataUri } from "./cover";
+import { generateCover } from "./cover";
 import { generateAudioSpec, melodyTimeline } from "./audio";
 import { resolveFractional, reviewCountFromLikes } from "./likes";
 import { LyricLine, Review, Song } from "./types";
@@ -109,8 +109,7 @@ export function generateSong(
   const album = makeAlbum(contentRng, bank);
 
   const coverRng = makeRng(`${songSeed}:cover`);
-  const coverSvg = generateCoverSvg(coverRng, title, artist);
-  const coverDataUri = svgToDataUri(coverSvg);
+  const cover = generateCover(coverRng);
 
   const audioRng = makeRng(`${songSeed}:audio`);
   const audio = generateAudioSpec(audioRng);
@@ -135,8 +134,7 @@ export function generateSong(
     album,
     artist,
     genre,
-    coverSvg,
-    coverDataUri,
+    cover,
     audio,
     lyrics,
     likes,
