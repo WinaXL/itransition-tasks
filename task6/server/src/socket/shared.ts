@@ -41,6 +41,23 @@ export function broadcastLeaderboard(ctx: SocketContext): void {
   ctx.io.emit('leaderboard:update', ctx.names.leaderboard());
 }
 
+/** Push fresh personal stats to a connected human player. */
+export function emitStatsUpdate(ctx: SocketContext, socketId: string, name: string): void {
+  const stats = ctx.names.getStats(name);
+  if (stats) ctx.io.to(socketId).emit('stats:update', stats);
+}
+
+/** Push updated stats to both human players in a session. */
+export function emitSessionStatsUpdates(ctx: SocketContext, session: GameSession): void {
+  const roles: PlayerRole[] = ['host', 'guest'];
+  for (const role of roles) {
+    if (session.isVsCpu && role === session.cpuRole) continue;
+    const socketId = socketIdForRole(session, role);
+    if (!socketId) continue;
+    emitStatsUpdate(ctx, socketId, nameForRole(session, role));
+  }
+}
+
 /** Emit each player's fog-of-war view + session meta individually. */
 export function emitGameState(ctx: SocketContext, session: GameSession): void {
   const targets: { socketId: string | null; role: PlayerRole }[] = [

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { ALLOWED_GRID_SIZES, defaultShipsFor } from '../../lib/configs';
+import { defaultShipsFor } from '../../lib/configs';
 import { CpuDifficulty } from '../../types';
+import { BattlefieldSizePicker } from './BattlefieldSizePicker';
 
 const DIFFICULTIES: { id: CpuDifficulty; label: string; hint: string }[] = [
   { id: 'easy', label: 'Easy', hint: 'Random fire — good for training.' },
@@ -22,6 +23,11 @@ export function VsCpuModal({
   const [gridSize, setGridSize] = useState(10);
   const [difficulty, setDifficulty] = useState<CpuDifficulty>('normal');
 
+  const shipCount = useMemo(
+    () => defaultShipsFor(gridSize).reduce((sum, s) => sum + s.count, 0),
+    [gridSize],
+  );
+
   return (
     <Modal open={open} onClose={onClose} title="Play vs Computer" maxWidth="32rem">
       <div className="space-y-5">
@@ -30,25 +36,12 @@ export function VsCpuModal({
           not affect the human leaderboard.
         </p>
 
-        <section>
-          <h4 className="mono mb-2 text-[0.7rem] uppercase tracking-widest text-ocean-300">Battlefield</h4>
-          <div className="grid grid-cols-3 gap-2">
-            {ALLOWED_GRID_SIZES.map((size) => (
-              <button
-                key={size}
-                type="button"
-                onClick={() => setGridSize(size)}
-                className={`border px-3 py-2 text-sm transition ${
-                  gridSize === size
-                    ? 'border-sonar bg-sonar/10 text-sonar'
-                    : 'border-ocean-700/60 text-ocean-200 hover:border-ocean-500/60'
-                }`}
-              >
-                {size}×{size}
-              </button>
-            ))}
-          </div>
-        </section>
+        <BattlefieldSizePicker
+          gridSize={gridSize}
+          onSelect={setGridSize}
+          label="Battlefield"
+          summary={`${gridSize}×${gridSize} · ${shipCount} ships (default fleet)`}
+        />
 
         <section>
           <h4 className="mono mb-2 text-[0.7rem] uppercase tracking-widest text-ocean-300">Difficulty</h4>

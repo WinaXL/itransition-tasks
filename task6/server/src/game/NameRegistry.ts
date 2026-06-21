@@ -16,17 +16,36 @@ export class NameRegistry {
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
   }
 
-  /** Register a socket under a unique display name derived from the requested name. */
-  register(socketId: string, requestedName: string): string {
-    this.release(socketId);
+  /** Find an existing stats key that matches case-insensitively. */
+  private findCanonicalName(name: string): string | undefined {
+    const lower = name.toLowerCase();
+    for (const key of this.stats.keys()) {
+      if (key.toLowerCase() === lower) return key;
+    }
+    return undefined;
+  }
 
-    const base = this.normalize(requestedName).slice(0, 24);
+  private resolveCandidate(base: string): string {
+    const canonical = this.findCanonicalName(base);
+    if (canonical && !this.activeNames.has(canonical)) {
+      return canonical;
+    }
+
     let candidate = base;
     let suffix = 2;
     while (this.activeNames.has(candidate)) {
       candidate = `${base} ${suffix}`;
       suffix += 1;
     }
+    return candidate;
+  }
+
+  /** Register a socket under a unique display name derived from the requested name. */
+  register(socketId: string, requestedName: string): string {
+    this.release(socketId);
+
+    const base = this.normalize(requestedName).slice(0, 24);
+    const candidate = this.resolveCandidate(base);
 
     this.activeNames.add(candidate);
     this.socketToName.set(socketId, candidate);
@@ -55,7 +74,10 @@ export class NameRegistry {
   }
 
   getStats(name: string): PlayerStats | undefined {
-    return this.stats.get(name);
+    const direct = this.stats.get(name);
+    if (direct) return direct;
+    const canonical = this.findCanonicalName(name);
+    return canonical ? this.stats.get(canonical) : undefined;
   }
 
   private ensureStats(name: string): PlayerStats {

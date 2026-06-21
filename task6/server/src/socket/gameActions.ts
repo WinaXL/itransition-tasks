@@ -4,6 +4,7 @@ import {
   broadcastLeaderboard,
   broadcastLobby,
   emitGameState,
+  emitSessionStatsUpdates,
   nameForRole,
   SocketContext,
 } from './shared';
@@ -31,6 +32,7 @@ export function concludeGame(ctx: SocketContext, session: GameSession, winnerRol
       session.gameState.shipsSunkBy(loserRole),
     );
     broadcastLeaderboard(ctx);
+    emitSessionStatsUpdates(ctx, session);
   }
 
   ctx.io.to(session.id).emit('game:over', {

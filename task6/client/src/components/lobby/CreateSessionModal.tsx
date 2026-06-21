@@ -1,25 +1,9 @@
 import { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { ALLOWED_GRID_SIZES, defaultShipsFor, shipAccent } from '../../lib/configs';
+import { defaultShipsFor, shipAccent } from '../../lib/configs';
 import { ShipDefinition } from '../../types';
-
-function MiniGrid({ size, active }: { size: number; active: boolean }) {
-  return (
-    <div
-      className="grid gap-[1px]"
-      style={{ gridTemplateColumns: `repeat(${size}, 1fr)`, width: 54 }}
-    >
-      {Array.from({ length: size * size }).map((_, i) => (
-        <span
-          key={i}
-          className="aspect-square"
-          style={{ background: active ? 'rgba(0,255,136,0.5)' : 'rgba(77,157,224,0.3)' }}
-        />
-      ))}
-    </div>
-  );
-}
+import { BattlefieldSizePicker } from './BattlefieldSizePicker';
 
 export function CreateSessionModal({
   open,
@@ -50,32 +34,7 @@ export function CreateSessionModal({
   return (
     <Modal open={open} onClose={onClose} title="Launch New Mission" maxWidth="40rem">
       <div className="space-y-5">
-        <section>
-          <h4 className="mono mb-2 text-[0.7rem] uppercase tracking-widest text-ocean-300">
-            Battlefield size
-          </h4>
-          <div className="grid grid-cols-3 gap-3">
-            {ALLOWED_GRID_SIZES.map((size) => {
-              const active = size === gridSize;
-              return (
-                <button
-                  key={size}
-                  onClick={() => selectSize(size)}
-                  className={`flex flex-col items-center gap-2 border p-3 transition ${
-                    active
-                      ? 'border-sonar bg-sonar/10'
-                      : 'border-ocean-700/60 bg-ocean-900/40 hover:border-ocean-500/60'
-                  }`}
-                >
-                  <MiniGrid size={size} active={active} />
-                  <span className={`heading text-xs ${active ? 'text-sonar' : 'text-ocean-200'}`}>
-                    {size}×{size}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        <BattlefieldSizePicker gridSize={gridSize} onSelect={selectSize} />
 
         <section>
           <h4 className="mono mb-2 text-[0.7rem] uppercase tracking-widest text-ocean-300">

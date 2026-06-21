@@ -36,14 +36,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     () => sessionStorage.getItem(MUTE_KEY) === '1',
   );
   const requestedName = useRef<string | null>(sessionStorage.getItem(NAME_KEY));
+  const displayNameRef = useRef<string | null>(null);
 
   const doRegister = useCallback((name: string): Promise<string> => {
     return new Promise((resolve) => {
       socket.emit('player:register', { name }, ({ displayName: assigned, stats: s }) => {
         setDisplayName(assigned);
+        displayNameRef.current = assigned;
         setStats(s);
-        sessionStorage.setItem(NAME_KEY, name);
-        requestedName.current = name;
+        sessionStorage.setItem(NAME_KEY, assigned);
+        requestedName.current = assigned;
         resolve(assigned);
       });
     });
@@ -52,22 +54,23 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onConnect = () => {
       setConnected(true);
-      // Auto re-register after a (re)connect if we have a remembered callsign.
       if (requestedName.current) {
         void doRegister(requestedName.current);
       }
     };
     const onDisconnect = () => setConnected(false);
     const onStats = (s: PlayerStats) => {
-      setStats((prev) => (prev && s.name === prev.name ? s : prev ?? s));
+      const current = displayNameRef.current;
+      if (current && s.name.toLowerCase() === current.toLowerCase()) {
+        setStats(s);
+      }
     };
     const onLeaderboard = (lb: PlayerStats[]) => {
       setLeaderboard(lb);
-      setStats((prev) => {
-        if (!prev) return prev;
-        const fresh = lb.find((e) => e.name === prev.name);
-        return fresh ?? prev;
-      });
+      const current = displayNameRef.current;
+      if (!current) return;
+      const fresh = lb.find((e) => e.name.toLowerCase() === current.toLowerCase());
+      if (fresh) setStats(fresh);
     };
 
     socket.on('connect', onConnect);
@@ -95,6 +98,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     sessionStorage.removeItem(NAME_KEY);
     requestedName.current = null;
+    displayNameRef.current = null;
     setDisplayName(null);
     setStats(null);
   }, []);
