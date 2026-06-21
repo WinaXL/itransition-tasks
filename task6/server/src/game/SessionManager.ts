@@ -1,6 +1,10 @@
 import { randomUUID } from 'crypto';
+import { CPU_NAME, CpuDifficulty } from './CpuPlayer';
 import { GameState } from './GameState';
 import { GameConfig, PlayerRole, SessionState } from './types';
+
+export type { CpuDifficulty };
+export { CPU_NAME } from './CpuPlayer';
 
 export interface GameSession {
   id: string;
@@ -14,6 +18,10 @@ export interface GameSession {
   createdAt: number;
   stats: { hostWins: number; guestWins: number };
   rematch: { host: boolean; guest: boolean };
+  isVsCpu: boolean;
+  cpuDifficulty: CpuDifficulty;
+  cpuRole: PlayerRole;
+  cpuTimer?: NodeJS.Timeout;
   /** Pending disconnect timer (role that dropped) for graceful reconnection. */
   disconnectTimer?: NodeJS.Timeout;
   disconnectedRole?: PlayerRole;
@@ -45,6 +53,36 @@ export class SessionManager {
       createdAt: Date.now(),
       stats: { hostWins: 0, guestWins: 0 },
       rematch: { host: false, guest: false },
+      isVsCpu: false,
+      cpuDifficulty: 'normal',
+      cpuRole: 'guest',
+    };
+    this.sessions.set(id, session);
+    return session;
+  }
+
+  createVsCpu(
+    hostName: string,
+    hostSocketId: string,
+    config: GameConfig,
+    difficulty: CpuDifficulty = 'normal',
+  ): GameSession {
+    const id = randomUUID();
+    const session: GameSession = {
+      id,
+      hostName,
+      hostSocketId,
+      guestName: CPU_NAME,
+      guestSocketId: null,
+      config,
+      state: 'placing',
+      gameState: new GameState(config),
+      createdAt: Date.now(),
+      stats: { hostWins: 0, guestWins: 0 },
+      rematch: { host: false, guest: false },
+      isVsCpu: true,
+      cpuDifficulty: difficulty,
+      cpuRole: 'guest',
     };
     this.sessions.set(id, session);
     return session;
@@ -57,6 +95,7 @@ export class SessionManager {
   remove(id: string): void {
     const session = this.sessions.get(id);
     if (session?.disconnectTimer) clearTimeout(session.disconnectTimer);
+    if (session?.cpuTimer) clearTimeout(session.cpuTimer);
     this.sessions.delete(id);
   }
 

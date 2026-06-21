@@ -2,8 +2,9 @@ import { config } from '../config';
 import { logger } from '../utils/logger';
 import { GameSession } from '../game/SessionManager';
 import { PlayerRole } from '../game/types';
+import { concludeGame, emitShotResult } from './gameActions';
+import { cancelCpuTimer, readyCpuFleet, scheduleCpuTurnIfNeeded } from './cpuController';
 import {
-  broadcastLeaderboard,
   broadcastLobby,
   emitGameState,
   nameForRole,
@@ -12,36 +13,10 @@ import {
   TypedSocket,
 } from './shared';
 
+export { concludeGame } from './gameActions';
+
 function opponentRole(role: PlayerRole): PlayerRole {
   return role === 'host' ? 'guest' : 'host';
-}
-
-/** Finalize a finished game: update session + global stats, notify both players. */
-export function concludeGame(ctx: SocketContext, session: GameSession, winnerRole: PlayerRole): void {
-  const loserRole = opponentRole(winnerRole);
-  const winnerName = nameForRole(session, winnerRole);
-  const loserName = nameForRole(session, loserRole);
-
-  session.state = 'finished';
-  if (winnerRole === 'host') session.stats.hostWins += 1;
-  else session.stats.guestWins += 1;
-
-  ctx.names.recordResult(
-    winnerName,
-    loserName,
-    session.gameState.shipsSunkBy(winnerRole),
-    session.gameState.shipsSunkBy(loserRole),
-  );
-
-  ctx.io.to(session.id).emit('game:over', {
-    winnerName,
-    loserName,
-    winnerRole,
-    stats: session.stats,
-  });
-  emitGameState(ctx, session);
-  broadcastLeaderboard(ctx);
-  broadcastLobby(ctx);
 }
 
 export function registerGameHandlers(socket: TypedSocket, ctx: SocketContext): void {
@@ -80,11 +55,20 @@ export function registerGameHandlers(socket: TypedSocket, ctx: SocketContext): v
         });
       }
 
+      if (session.isVsCpu && !session.gameState.isReady(session.cpuRole)) {
+        readyCpuFleet(session);
+        ctx.io.to(session.hostSocketId).emit('game:opponentProgress', {
+          placed: session.gameState.fleetSize,
+          total: session.gameState.fleetSize,
+        });
+      }
+
       if (session.gameState.bothReady()) {
         session.state = 'battle';
         ctx.io.to(session.id).emit('game:start');
       }
       emitGameState(ctx, session);
+      scheduleCpuTurnIfNeeded(ctx, session);
     } catch (err) {
       logger.error('game:ready failed', err);
       socket.emit('game:error', { message: 'Could not lock in your fleet.' });
@@ -102,22 +86,14 @@ export function registerGameHandlers(socket: TypedSocket, ctx: SocketContext): v
         return socket.emit('game:error', { message: result.error ?? 'Invalid shot.' });
       }
 
-      ctx.io.to(session.id).emit('game:shotResult', {
-        shooter: role,
-        row,
-        col,
+      emitShotResult(ctx, session, role, row, col, {
         outcome: result.outcome!,
         shipName: result.shipName,
         sunkShipCells: result.sunkShipCells,
         nextTurn: result.nextTurn!,
         gameOver: !!result.gameOver,
       });
-
-      if (result.gameOver) {
-        concludeGame(ctx, session, role);
-      } else {
-        emitGameState(ctx, session);
-      }
+      if (!result.gameOver) scheduleCpuTurnIfNeeded(ctx, session);
     } catch (err) {
       logger.error('game:fire failed', err);
       socket.emit('game:error', { message: 'Could not register your shot.' });
@@ -127,6 +103,7 @@ export function registerGameHandlers(socket: TypedSocket, ctx: SocketContext): v
   socket.on('game:chat', ({ message }) => {
     const ctxt = sessionFor();
     if (!ctxt) return;
+    if (ctxt.session.isVsCpu) return;
     const clean = String(message).slice(0, 200).trim();
     if (!clean) return;
     ctx.io.to(ctxt.session.id).emit('game:chatMessage', {
@@ -142,6 +119,15 @@ export function registerGameHandlers(socket: TypedSocket, ctx: SocketContext): v
     if (!ctxt) return;
     const { session, role } = ctxt;
     if (session.state !== 'finished') return;
+
+    if (session.isVsCpu) {
+      cancelCpuTimer(session);
+      session.gameState.reset();
+      session.rematch = { host: false, guest: false };
+      session.state = 'placing';
+      emitGameState(ctx, session);
+      return;
+    }
 
     session.rematch[role] = true;
     const oppId = socketIdForRole(session, opponentRole(role));
@@ -174,6 +160,7 @@ export function handlePlayerExit(ctx: SocketContext, socket: TypedSocket, immedi
   if (!role) return;
 
   socket.leave(session.id);
+  cancelCpuTimer(session);
 
   // Waiting host leaving -> just destroy the session.
   if (session.state === 'waiting') {
@@ -200,6 +187,11 @@ export function handlePlayerExit(ctx: SocketContext, socket: TypedSocket, immedi
 
   // Active game.
   if (immediate) {
+    if (session.isVsCpu) {
+      ctx.sessions.remove(session.id);
+      broadcastLobby(ctx);
+      return;
+    }
     if (oppId) {
       ctx.io.to(oppId).emit('game:opponentLeft', { name: leaverName, temporary: false });
       concludeGame(ctx, session, oppRole);
@@ -207,6 +199,11 @@ export function handlePlayerExit(ctx: SocketContext, socket: TypedSocket, immedi
     ctx.sessions.remove(session.id);
     broadcastLobby(ctx);
   } else {
+    if (session.isVsCpu) {
+      ctx.sessions.remove(session.id);
+      broadcastLobby(ctx);
+      return;
+    }
     // Graceful: give the player time to reconnect.
     if (oppId) ctx.io.to(oppId).emit('game:opponentLeft', { name: leaverName, temporary: true });
     session.disconnectedRole = role;

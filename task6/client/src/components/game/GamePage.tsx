@@ -5,6 +5,8 @@ import { PlacementPhase } from './PlacementPhase';
 import { BattlePhase } from './BattlePhase';
 import { GameResultModal } from './GameResultModal';
 import { useGame } from '../../hooks/useGame';
+import { useReplayRecorder } from '../../hooks/useReplayRecorder';
+import { usePlayer } from '../../context/PlayerContext';
 
 export function GamePage() {
   const {
@@ -23,9 +25,33 @@ export function GamePage() {
     rematch,
     leaveGame,
   } = useGame();
+  const { displayName } = usePlayer();
 
   const [showTransition, setShowTransition] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+
+  const myName =
+    session && displayName
+      ? displayName
+      : session
+        ? session.yourRole === 'host'
+          ? session.hostName
+          : session.guestName ?? 'You'
+        : 'You';
+
+  const enemyName =
+    session && view
+      ? (session.yourRole === 'host' ? session.guestName : session.hostName) ?? 'Opponent'
+      : 'Opponent';
+
+  const replay = useReplayRecorder({
+    sessionId: session?.id,
+    view: view?.phase === 'battle' || gameOver ? view : null,
+    myName,
+    enemyName,
+    myRole: session?.yourRole ?? 'host',
+    gameOver,
+  });
 
   useEffect(() => {
     if (battleStarted > 0) {
@@ -59,8 +85,6 @@ export function GamePage() {
     );
   }
 
-  const enemyName = (session.yourRole === 'host' ? session.guestName : session.hostName) ?? 'Opponent';
-
   return (
     <div className="min-h-screen">
       <Header inGame />
@@ -76,10 +100,17 @@ export function GamePage() {
           session={session}
           view={view}
           enemyName={enemyName}
+          myName={myName}
           lastShot={lastShot}
           chat={chat}
           onFire={fire}
           onSendChat={sendChat}
+          recording={replay.recording}
+          canRecord={replay.canRecord}
+          replayError={replay.error}
+          hasReplay={!!replay.downloadBlob}
+          onToggleRecording={replay.toggleRecording}
+          onDownloadReplay={replay.downloadReplay}
         />
       ) : (
         <PlacementPhase
@@ -123,8 +154,13 @@ export function GamePage() {
         <GameResultModal
           result={gameOver}
           myRole={session.yourRole}
+          isVsCpu={session.isVsCpu}
           onRematch={rematch}
           onLeave={leaveGame}
+          hasReplay={!!replay.downloadBlob}
+          onDownloadReplay={replay.downloadReplay}
+          onStopRecording={replay.stopRecording}
+          recording={replay.recording}
         />
       )}
     </div>

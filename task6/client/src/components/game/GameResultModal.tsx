@@ -7,13 +7,23 @@ import { GameOverPayload, PlayerRole } from '../../types';
 export function GameResultModal({
   result,
   myRole,
+  isVsCpu = false,
   onRematch,
   onLeave,
+  hasReplay = false,
+  onDownloadReplay,
+  onStopRecording,
+  recording = false,
 }: {
   result: GameOverPayload;
   myRole: PlayerRole;
+  isVsCpu?: boolean;
   onRematch: () => void;
   onLeave: () => void;
+  hasReplay?: boolean;
+  onDownloadReplay?: () => void;
+  onStopRecording?: () => void;
+  recording?: boolean;
 }) {
   const sfx = useSoundFX();
   const won = result.winnerRole === myRole;
@@ -60,7 +70,21 @@ export function GameResultModal({
         </div>
 
         <div className="mt-6 flex flex-col gap-3">
-          {requested ? (
+          {hasReplay && onDownloadReplay && (
+            <Button variant="ghost" onClick={onDownloadReplay}>
+              ⬇ Download Replay Video
+            </Button>
+          )}
+          {recording && onStopRecording && (
+            <Button variant="ghost" onClick={onStopRecording}>
+              ■ Stop Recording
+            </Button>
+          )}
+          {isVsCpu ? (
+            <Button variant="primary" onClick={onRematch}>
+              ⟳ Play Again
+            </Button>
+          ) : requested ? (
             <div className="anim-blink mono py-2 text-sm text-sonar">Waiting for opponent…</div>
           ) : (
             <Button

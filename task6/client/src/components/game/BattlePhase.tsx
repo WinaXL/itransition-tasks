@@ -19,13 +19,35 @@ interface Props {
   session: ClientSessionInfo;
   view: VisibleState;
   enemyName: string;
+  myName: string;
   lastShot: ShotResultPayload | null;
   chat: ChatMessage[];
   onFire: (row: number, col: number) => void;
   onSendChat: (message: string) => void;
+  recording: boolean;
+  canRecord: boolean;
+  replayError: string | null;
+  hasReplay: boolean;
+  onToggleRecording: () => void;
+  onDownloadReplay: () => void;
 }
 
-export function BattlePhase({ session, view, enemyName, lastShot, chat, onFire, onSendChat }: Props) {
+export function BattlePhase({
+  session,
+  view,
+  enemyName,
+  myName,
+  lastShot,
+  chat,
+  onFire,
+  onSendChat,
+  recording,
+  canRecord,
+  replayError,
+  hasReplay,
+  onToggleRecording,
+  onDownloadReplay,
+}: Props) {
   const sfx = useSoundFX();
   const myRole = session.yourRole;
   const myTurn = view.currentTurn === myRole && view.phase === 'battle';
@@ -90,11 +112,40 @@ export function BattlePhase({ session, view, enemyName, lastShot, chat, onFire, 
 
       <GameHeader
         myTurn={myTurn}
-        myName={session.yourRole === 'host' ? session.hostName : session.guestName ?? 'You'}
+        myName={myName}
         enemyName={enemyName}
         myWins={myRole === 'host' ? session.stats.hostWins : session.stats.guestWins}
         enemyWins={myRole === 'host' ? session.stats.guestWins : session.stats.hostWins}
       />
+
+      <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
+        {canRecord && (
+          <button
+            type="button"
+            onClick={onToggleRecording}
+            className={`mono flex items-center gap-2 border px-3 py-1.5 text-[0.65rem] uppercase tracking-widest transition ${
+              recording
+                ? 'border-danger/60 bg-danger/10 text-danger'
+                : 'border-ocean-700/60 text-ocean-200 hover:border-sonar/50'
+            }`}
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${recording ? 'anim-blink bg-danger' : 'bg-slate-500'}`}
+            />
+            {recording ? 'REC — Stop Replay' : 'Record Replay'}
+          </button>
+        )}
+        {replayError && <span className="mono text-[0.65rem] text-danger">{replayError}</span>}
+        {hasReplay && !recording && (
+          <button
+            type="button"
+            onClick={onDownloadReplay}
+            className="mono border border-sonar/40 px-3 py-1.5 text-[0.65rem] uppercase tracking-widest text-sonar"
+          >
+            Download Replay
+          </button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <BoardPanel
@@ -146,7 +197,7 @@ export function BattlePhase({ session, view, enemyName, lastShot, chat, onFire, 
         </span>
       </div>
 
-      <ChatPanel chat={chat} myRole={myRole} onSend={onSendChat} />
+      <ChatPanel chat={chat} myRole={myRole} onSend={onSendChat} disabled={session.isVsCpu} />
     </div>
   );
 }

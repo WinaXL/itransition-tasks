@@ -1,8 +1,11 @@
 export type PlayerRole = 'host' | 'guest';
+export type CpuDifficulty = 'easy' | 'normal' | 'hard';
 export type Orientation = 'horizontal' | 'vertical';
 export type Phase = 'placement' | 'battle' | 'finished';
 export type SessionState = 'waiting' | 'placing' | 'battle' | 'finished';
 export type ShotOutcome = 'miss' | 'hit' | 'sunk';
+
+export const CPU_NAME = 'CPU Admiral';
 
 export interface Cell {
   row: number;
@@ -74,6 +77,7 @@ export interface ClientSessionInfo {
   state: SessionState;
   stats: { hostWins: number; guestWins: number };
   yourRole: PlayerRole;
+  isVsCpu: boolean;
 }
 
 export interface ChatMessage {
@@ -134,6 +138,7 @@ export interface ClientToServerEvents {
   ) => void;
   'lobby:list': () => void;
   'lobby:create': (payload: { config: GameConfig }) => void;
+  'lobby:createVsCpu': (payload: { config: GameConfig; difficulty: CpuDifficulty }) => void;
   'lobby:join': (payload: { roomId: string }) => void;
   'lobby:cancel': (payload: { roomId: string }) => void;
   'game:placing': (payload: { placed: number; total: number }) => void;

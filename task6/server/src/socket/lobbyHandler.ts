@@ -39,6 +39,31 @@ export function registerLobbyHandlers(socket: TypedSocket, ctx: SocketContext): 
     }
   });
 
+  socket.on('lobby:createVsCpu', ({ config, difficulty }) => {
+    try {
+      const name = ctx.names.getName(socket.id);
+      if (!name) return socket.emit('lobby:error', { message: 'Register your callsign first.' });
+
+      const existing = ctx.sessions.findBySocket(socket.id);
+      if (existing) {
+        return socket.emit('lobby:error', { message: 'You are already in a session.' });
+      }
+
+      const safe = sanitizeConfig(config);
+      const level = difficulty === 'easy' || difficulty === 'hard' ? difficulty : 'normal';
+      const session = ctx.sessions.createVsCpu(name, socket.id, safe, level);
+      socket.leave(LOBBY_ROOM);
+      socket.join(session.id);
+
+      socket.emit('lobby:joined', { session: buildSessionInfo(session, 'host') });
+      emitGameState(ctx, session);
+      logger.info(`CPU session ${session.id.slice(0, 8)} created by ${name} (${level})`);
+    } catch (err) {
+      logger.error('lobby:createVsCpu failed', err);
+      socket.emit('lobby:error', { message: 'Could not start a CPU mission.' });
+    }
+  });
+
   socket.on('lobby:join', ({ roomId }) => {
     try {
       const name = ctx.names.getName(socket.id);

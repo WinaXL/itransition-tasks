@@ -27,6 +27,7 @@ export interface ClientSessionInfo {
   state: SessionState;
   stats: { hostWins: number; guestWins: number };
   yourRole: PlayerRole;
+  isVsCpu: boolean;
 }
 
 export interface ChatMessage {
@@ -44,6 +45,7 @@ export interface ClientToServerEvents {
   ) => void;
   'lobby:list': () => void;
   'lobby:create': (payload: { config: GameConfig }) => void;
+  'lobby:createVsCpu': (payload: { config: GameConfig; difficulty: 'easy' | 'normal' | 'hard' }) => void;
   'lobby:join': (payload: { roomId: string }) => void;
   'lobby:cancel': (payload: { roomId: string }) => void;
   'game:placing': (payload: { placed: number; total: number }) => void;

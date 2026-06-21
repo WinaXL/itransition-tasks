@@ -3,13 +3,15 @@ import { Header } from '../layout/Header';
 import { SessionCard } from './SessionCard';
 import { PlayerStats } from './PlayerStats';
 import { CreateSessionModal } from './CreateSessionModal';
+import { VsCpuModal } from './VsCpuModal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useLobby } from '../../hooks/useLobby';
 
 export function LobbyPage() {
-  const { sessions, createSession, joinSession, refreshLobby, openCount } = useLobby();
+  const { sessions, createSession, createVsCpuSession, joinSession, refreshLobby, openCount } = useLobby();
   const [modalOpen, setModalOpen] = useState(false);
+  const [cpuModalOpen, setCpuModalOpen] = useState(false);
 
   return (
     <div className="min-h-screen">
@@ -59,6 +61,9 @@ export function LobbyPage() {
             <Button variant="primary" className="w-full" onClick={() => setModalOpen(true)}>
               + Create New Mission
             </Button>
+            <Button variant="ghost" className="w-full border border-gold/40 text-gold" onClick={() => setCpuModalOpen(true)}>
+              🤖 Play vs Computer
+            </Button>
             <PlayerStats />
           </aside>
         </div>
@@ -71,6 +76,12 @@ export function LobbyPage() {
           createSession(config);
           setModalOpen(false);
         }}
+      />
+
+      <VsCpuModal
+        open={cpuModalOpen}
+        onClose={() => setCpuModalOpen(false)}
+        onStart={(config, difficulty) => createVsCpuSession(config, difficulty)}
       />
     </div>
   );

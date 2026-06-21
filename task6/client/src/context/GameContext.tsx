@@ -12,6 +12,7 @@ import { socket } from '../lib/socket';
 import {
   ChatMessage,
   ClientSessionInfo,
+  CpuDifficulty,
   FleetEntry,
   GameConfig,
   GameOverPayload,
@@ -42,6 +43,7 @@ interface GameContextValue {
 
   refreshLobby: () => void;
   createSession: (config: GameConfig) => void;
+  createVsCpuSession: (config: GameConfig, difficulty: CpuDifficulty) => void;
   joinSession: (roomId: string) => void;
   cancelSession: (roomId: string) => void;
   sendPlacing: (placed: number, total: number) => void;
@@ -142,6 +144,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const refreshLobby = useCallback(() => socket.emit('lobby:list'), []);
   const createSession = useCallback((config: GameConfig) => socket.emit('lobby:create', { config }), []);
+  const createVsCpuSession = useCallback(
+    (config: GameConfig, difficulty: CpuDifficulty) =>
+      socket.emit('lobby:createVsCpu', { config, difficulty }),
+    [],
+  );
   const joinSession = useCallback((roomId: string) => socket.emit('lobby:join', { roomId }), []);
   const cancelSession = useCallback((roomId: string) => {
     socket.emit('lobby:cancel', { roomId });
@@ -184,6 +191,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       pendingNav,
       refreshLobby,
       createSession,
+      createVsCpuSession,
       joinSession,
       cancelSession,
       sendPlacing,
@@ -209,6 +217,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       pendingNav,
       refreshLobby,
       createSession,
+      createVsCpuSession,
       joinSession,
       cancelSession,
       sendPlacing,

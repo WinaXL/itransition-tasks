@@ -11,10 +11,12 @@ export function ChatPanel({
   chat,
   myRole,
   onSend,
+  disabled = false,
 }: {
   chat: ChatMessage[];
   myRole: PlayerRole;
   onSend: (message: string) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
@@ -35,6 +37,8 @@ export function ChatPanel({
     onSend(t.slice(0, 200));
     setText('');
   };
+
+  if (disabled) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-30">

@@ -29,6 +29,7 @@ export function buildSessionInfo(session: GameSession, role: PlayerRole): Client
     state: session.state,
     stats: session.stats,
     yourRole: role,
+    isVsCpu: session.isVsCpu,
   };
 }
 

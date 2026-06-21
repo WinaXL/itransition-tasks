@@ -3,7 +3,8 @@ import { useGameContext } from '../context/GameContext';
 
 /** Lobby slice: open sessions + create/join/cancel actions. */
 export function useLobby() {
-  const { sessions, refreshLobby, createSession, joinSession, cancelSession } = useGameContext();
+  const { sessions, refreshLobby, createSession, createVsCpuSession, joinSession, cancelSession } =
+    useGameContext();
 
   useEffect(() => {
     refreshLobby();
@@ -13,6 +14,7 @@ export function useLobby() {
     sessions,
     refreshLobby,
     createSession,
+    createVsCpuSession,
     joinSession,
     cancelSession,
     openCount: sessions.length,
