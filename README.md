@@ -13,6 +13,7 @@
 | 3 | LCM Web Server | [`task3/`](task3/) | Express, HTTP API |
 | 4 | User Management Admin Panel | [`task4/`](task4/) | React, Express, PostgreSQL, JWT |
 | 5 | Soundforge — Procedural Music Store | [`task5/`](task5/) | React + TS, Express + TS, Web Audio |
+| 6 | Naval Strike — Multiplayer Battleship | [`task6/`](task6/) | React + TS, Express + Socket.io, Tailwind v4 |
 
 ### Дополнительные задания (optional)
 
@@ -45,6 +46,9 @@ itransition-tasks/
 ├── task5/
 │   ├── backend/                # Express API, seeded generation
 │   └── frontend/               # React SPA (table + gallery)
+├── task6/
+│   ├── server/                 # Express + Socket.io game server
+│   └── client/                 # React SPA (Vite + Tailwind v4)
 ├── optional1/
 │   ├── build_quine.js          # генератор quine-relay
 │   ├── quine.js                # самовоспроизводящаяся цепочка
@@ -139,6 +143,20 @@ cd task5/frontend && npm install && npm run dev   # :5173
 
 ---
 
+## Задание 6 — Naval Strike (Multiplayer Battleship)
+
+**Папка:** [`task6/`](task6/) · Подробнее: [`task6/README.md`](task6/README.md)
+
+Real-time multiplayer «Морской бой» для двух удалённых соперников: комнаты, настройка сетки и флота, WebSocket без перезагрузки страницы. Имена без регистрации с суффиксами (`John`, `John 2`, …).
+
+```bash
+cd task6 && npm run install:all && npm run dev    # client :5173, server :3001
+```
+
+Деплой: backend → Render (`task6/render.yaml`), frontend → Vercel (`task6/client/vercel.json`).
+
+---
+
 ## Optional 1 — Quine Relay (5 языков)
 
 **Папка:** [`optional1/`](optional1/)
@@ -193,7 +211,7 @@ python solve-digits.py
 
 ## Требования
 
-| | Задания 1–2, optional 1–3 | Задание 3 | Задания 4–5 | Optional 4 |
+| | Задания 1–2, optional 1–3 | Задание 3 | Задания 4–6 | Optional 4 |
 |---|---------------------------|-----------|-------------|------------|
 | **Runtime** | Node.js 18+ | Node.js 18+ | Node.js 18+ | Python 3.10+ |
 | **Зависимости** | встроенные модули | `npm install` | `npm install` | `pip install -r requirements.txt` |

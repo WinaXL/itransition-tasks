@@ -1,0 +1,200 @@
+@import 'tailwindcss';
+@import './animations.css';
+
+/* ── Design tokens (Tailwind v4 CSS-first theme) ───────────── */
+@theme {
+  --color-ocean-950: #020c18;
+  --color-ocean-900: #04182e;
+  --color-ocean-800: #072444;
+  --color-ocean-700: #0a3560;
+  --color-ocean-600: #0e477f;
+  --color-ocean-500: #1565a8;
+  --color-ocean-400: #2b81c9;
+  --color-ocean-300: #4d9de0;
+  --color-ocean-200: #8fc4ef;
+
+  --color-sonar: #00ff88;
+  --color-sonar-dim: #0a7a47;
+  --color-danger: #ff4444;
+  --color-danger-deep: #8b1a1a;
+  --color-miss: #334466;
+  --color-ship: #8ba3c7;
+  --color-gold: #f4b942;
+
+  --font-display: 'Orbitron', sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --shadow-glow-sonar: 0 0 18px rgba(0, 255, 136, 0.55);
+  --shadow-glow-danger: 0 0 22px rgba(255, 68, 68, 0.6);
+}
+
+/* ── Base ──────────────────────────────────────────────────── */
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-ocean-950);
+  color: #dce8f5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Reusable component classes ────────────────────────────── */
+@layer components {
+  .panel {
+    background: rgba(4, 24, 46, 0.82);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(77, 157, 224, 0.16);
+    border-top-color: rgba(143, 196, 239, 0.28);
+    box-shadow:
+      0 18px 48px -24px rgba(0, 0, 0, 0.9),
+      inset 0 1px 0 rgba(143, 196, 239, 0.08);
+  }
+
+  .panel-inset {
+    background: rgba(2, 12, 24, 0.6);
+    border: 1px solid rgba(10, 53, 96, 0.7);
+  }
+
+  .heading {
+    font-family: var(--font-display);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Sharp, military-style button with a sonar accent bar. */
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #eaf4ff;
+    background: linear-gradient(180deg, rgba(14, 71, 127, 0.55), rgba(7, 36, 68, 0.85));
+    border: 1px solid rgba(77, 157, 224, 0.35);
+    border-left: 2px solid var(--color-sonar);
+    cursor: pointer;
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.18s ease,
+      background 0.18s ease;
+    overflow: hidden;
+  }
+
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.04) 0px,
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 22px -8px rgba(0, 255, 136, 0.5);
+    background: linear-gradient(180deg, rgba(21, 101, 168, 0.7), rgba(10, 53, 96, 0.9));
+  }
+
+  .btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-left-color: var(--color-ocean-700);
+  }
+
+  .btn-primary {
+    background: linear-gradient(180deg, rgba(0, 255, 136, 0.18), rgba(10, 122, 71, 0.28));
+    border-color: rgba(0, 255, 136, 0.5);
+    color: #d6ffe9;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: var(--shadow-glow-sonar);
+    background: linear-gradient(180deg, rgba(0, 255, 136, 0.28), rgba(10, 122, 71, 0.4));
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border-color: rgba(77, 157, 224, 0.22);
+    border-left-color: rgba(77, 157, 224, 0.5);
+  }
+
+  .btn-danger {
+    border-left-color: var(--color-danger);
+  }
+
+  .field {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(77, 157, 224, 0.4);
+    padding: 0.6rem 0.2rem;
+    color: #eaf4ff;
+    caret-color: var(--color-sonar);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+
+  .field:focus {
+    border-bottom-color: var(--color-sonar);
+  }
+}
+
+/* ── Scrollbars ────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(2, 12, 24, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(14, 71, 127, 0.8);
+  border-radius: 0;
+  border: 2px solid rgba(2, 12, 24, 0.5);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(21, 101, 168, 0.9);
+}
+
+::selection {
+  background: rgba(0, 255, 136, 0.3);
+  color: #fff;
+}
