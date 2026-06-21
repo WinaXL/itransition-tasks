@@ -6,7 +6,7 @@ services:
     name: naval-strike-server
     runtime: node
     plan: free
-    rootDir: server
+    rootDir: task6/server
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
