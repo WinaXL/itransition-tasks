@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: cvforge
+    runtime: node
+    rootDir: Project
+    buildCommand: npm run install:all && npm run build && npm --prefix server run db:push
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cvforge-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: APP_URL
+        sync: false
+      - key: API_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+
+databases:
+  - name: cvforge-db
+    plan: free

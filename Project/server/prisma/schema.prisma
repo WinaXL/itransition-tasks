@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CANDIDATE
+  RECRUITER
+  ADMIN
+}
+
+enum AttributeType {
+  STRING
+  TEXT
+  IMAGE
+  NUMERIC
+  DATE
+  PERIOD
+  BOOLEAN
+  SELECT
+}
+
+enum CvStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  avatarUrl    String?
+  passwordHash String?
+  provider     String? // "google" | "github" | null (form)
+  providerId   String?
+  role         Role     @default(CANDIDATE)
+  blocked      Boolean  @default(false)
+  language     String   @default("en")
+  theme        String   @default("light")
+  version      Int      @default(1)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  attributeValues AttributeValue[]
+  projects        Project[]
+  cvs             Cv[]
+  likes           Like[]
+  comments        Comment[]
+  createdPositions Position[]
+
+  @@unique([provider, providerId])
+}
+
+model AttributeCategory {
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  attributes Attribute[]
+}
+
+model Attribute {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  description String        @default("")
+  type        AttributeType
+  // options for SELECT type
+  options     String[]      @default([])
+  // built-in "Me" attributes (First Name, ...) cannot be deleted / retyped
+  builtIn     Boolean       @default(false)
+  categoryId  Int
+  category    AttributeCategory @relation(fields: [categoryId], references: [id])
+  version     Int           @default(1)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  values             AttributeValue[]
+  positionAttributes PositionAttribute[]
+  accessRules        AccessRule[]
+}
+
+// One master value per (user, attribute) — shared by profile and all CVs.
+model AttributeValue {
+  id          String    @id @default(cuid())
+  userId      String
+  attributeId String
+  value       String    @default("")
+  // parsed copy for NUMERIC attributes: enables aggregates and access-rule filters in SQL
+  valueNum    Float?
+  version     Int       @default(1)
+  updatedAt   DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attribute Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, attributeId])
+}
+
+model Tag {
+  id       Int    @id @default(autoincrement())
+  name     String @unique
+  projects ProjectTag[]
+  positions PositionTag[]
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  startDate   DateTime
+  endDate     DateTime?
+  description String    @default("")
+  version     Int       @default(1)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags ProjectTag[]
+}
+
+model ProjectTag {
+  projectId String
+  tagId     Int
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, tagId])
+}
+
+model Position {
+  id               String   @id @default(cuid())
+  title            String
+  shortDescription String   @default("")
+  company          String   @default("")
+  level            String   @default("")
+  isPublic         Boolean  @default(true)
+  maxProjects      Int      @default(3)
+  version          Int      @default(1)
+  createdById      String?
+  createdBy        User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  attributes  PositionAttribute[]
+  projectTags PositionTag[]
+  accessRules AccessRule[]
+  cvs         Cv[]
+  comments    Comment[]
+}
+
+model PositionAttribute {
+  positionId  String
+  attributeId String
+  sortOrder   Int    @default(0)
+  position    Position  @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+
+  @@id([positionId, attributeId])
+}
+
+// Tags used to filter candidate projects into the generated CV.
+model PositionTag {
+  positionId String
+  tagId      Int
+  position   Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([positionId, tagId])
+}
+
+// Access rule: attribute <operator> value, e.g. "IELTS Score" gt 7.
+model AccessRule {
+  id          String @id @default(cuid())
+  positionId  String
+  attributeId String
+  operator    String // eq | neq | gt | gte | lt | lte | contains | checked | unchecked
+  value       String @default("")
+
+  position  Position  @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  attribute Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+}
+
+// CV content is looked up from the profile at render time, never copied.
+model Cv {
+  id         String   @id @default(cuid())
+  userId     String
+  positionId String
+  status     CvStatus @default(DRAFT)
+  version    Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  likes    Like[]
+
+  @@unique([userId, positionId])
+}
+
+model Like {
+  cvId      String
+  userId    String
+  createdAt DateTime @default(now())
+  cv        Cv   @relation(fields: [cvId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([cvId, userId])
+}
+
+// Discussion post on a position.
+model Comment {
+  id         String   @id @default(cuid())
+  positionId String
+  authorId   String
+  text       String
+  createdAt  DateTime @default(now())
+
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  author   User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
