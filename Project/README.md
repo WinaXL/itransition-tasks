@@ -66,14 +66,14 @@ Demo logins after seeding (password `Passw0rd!`):
 
 ### Image uploads (Cloudinary)
 
-Create an unsigned upload preset and set in `client/.env`:
+Create an unsigned upload preset and set the same vars **locally** (`client/.env`) and **on Render** (Build-time env vars — Vite inlines `VITE_*` during `npm run build`):
 
 ```
 VITE_CLOUDINARY_CLOUD=your-cloud-name
 VITE_CLOUDINARY_PRESET=your-unsigned-preset
 ```
 
-Without these vars the image attribute falls back to a plain URL field.
+Without these vars the image attribute falls back to a plain URL field. After changing them on Render, trigger a new deploy so the client rebuild picks them up.
 
 ## Deployment (Render)
 

@@ -30,6 +30,11 @@ services:
         sync: false
       - key: GITHUB_CLIENT_SECRET
         sync: false
+      # Built into the SPA at compile time (Vite). Redeploy after changing.
+      - key: VITE_CLOUDINARY_CLOUD
+        sync: false
+      - key: VITE_CLOUDINARY_PRESET
+        sync: false
 
 databases:
   - name: cvforge-db
