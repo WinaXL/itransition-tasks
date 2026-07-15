@@ -81,7 +81,7 @@ Root Directory: `Project`
 
 | Setting | Value |
 |---------|--------|
-| Build Command | `npm install --include=dev && npm run build && npm --prefix server exec prisma db push` |
+| Build Command | `npm install --include=dev && npm run build && npm run db:push` |
 | Start Command | `npm start` |
 | Node version | `20.x` (from `package.json` engines) |
 
