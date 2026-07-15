@@ -2,9 +2,13 @@ services:
   - type: web
     name: cvforge
     runtime: node
+    plan: free
     rootDir: Project
-    buildCommand: npm run install:all && npm run build && npm --prefix server run db:push
+    # --include=dev: Prisma / TypeScript / Vite live in (or via) packages that
+    # Render would skip when NODE_ENV=production during a plain npm install.
+    buildCommand: npm install --include=dev && npm run build && npm --prefix server exec prisma db push
     startCommand: npm start
+    healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
         fromDatabase:

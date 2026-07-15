@@ -7,8 +7,8 @@
     "dev": "concurrently -n SERVER,CLIENT -c cyan,green \"npm:dev:server\" \"npm:dev:client\"",
     "dev:server": "npm --prefix server run dev",
     "dev:client": "npm --prefix client run dev",
-    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
-    "build": "npm --prefix server run build && npm --prefix client run build",
+    "install:all": "npm install --include=dev && npm --prefix server install --include=dev && npm --prefix client install --include=dev",
+    "build": "npm --prefix server install --include=dev && npm --prefix client install --include=dev && npm --prefix server run build && npm --prefix client run build",
     "start": "npm --prefix server run start",
     "db:push": "npm --prefix server run db:push",
     "db:seed": "npm --prefix server run db:seed"
@@ -17,6 +17,6 @@
     "concurrently": "^9.1.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": "20.x"
   }
 }

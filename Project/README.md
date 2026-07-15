@@ -77,7 +77,17 @@ Without these vars the image attribute falls back to a plain URL field.
 
 ## Deployment (Render)
 
-`render.yaml` describes a single web service (Express serves the built SPA) plus a managed PostgreSQL instance. Build: `npm run install:all && npm run build && npm run db:push`; start: `npm start`.
+Root Directory: `Project`
+
+| Setting | Value |
+|---------|--------|
+| Build Command | `npm install --include=dev && npm run build && npm --prefix server exec prisma db push` |
+| Start Command | `npm start` |
+| Node version | `20.x` (from `package.json` engines) |
+
+Link your existing Postgres as `DATABASE_URL`. Also set `JWT_SECRET`, and after deploy set `APP_URL` / `API_URL` to the public service URL (e.g. `https://cvforge.onrender.com`) for OAuth redirects.
+
+`render.yaml` matches the same settings if you import a Blueprint.
 
 ## Roles summary
 
