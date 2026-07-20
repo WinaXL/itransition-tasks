@@ -70,3 +70,18 @@ body {
 .prose-md {
   @apply text-sm leading-relaxed [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_p]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-brand-600 [&_a]:underline [&_code]:bg-slate-100 [&_code]:dark:bg-slate-800 [&_code]:px-1 [&_code]:rounded;
 }
+
+/* Print / "Download PDF": only the rendered CV document is printed. */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: white;
+  }
+  /* Keep CV sections from being split awkwardly across pages. */
+  article section {
+    break-inside: avoid;
+  }
+}

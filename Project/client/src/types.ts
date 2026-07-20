@@ -85,6 +85,8 @@ export interface CvSection {
   value: string;
   version: number | null;
   category: string;
+  /** True for position-template attributes that must be filled before publishing. */
+  required: boolean;
 }
 
 export interface CvData {

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Check, Heart, Loader2, Send, Trash2, X } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { Check, FileDown, Heart, Loader2, Send, Trash2, X } from "lucide-react";
 import { api, ApiError } from "../api";
 import { Attribute, CvData } from "../types";
 import { useAuth } from "../AuthContext";
@@ -85,6 +86,24 @@ export default function CvPage() {
     navigate(`/profile/${cv.user.id}`);
   };
 
+  /**
+   * Native print-to-PDF: the print stylesheet hides the app chrome and prints
+   * only the rendered CV with vector text. Dark theme is lifted for the
+   * duration of the dialog so the document always prints on white.
+   */
+  const downloadPdf = () => {
+    const root = document.documentElement;
+    const wasDark = root.classList.contains("dark");
+    if (wasDark) root.classList.remove("dark");
+    window.print();
+    if (wasDark) root.classList.add("dark");
+  };
+
+  // Publish readiness: only position-template attributes count (same rule as the server).
+  const requiredSections = cv.sections.filter((s) => s.required);
+  const filledCount = requiredSections.filter((s) => (values.get(s.attribute.id)?.value ?? "") !== "").length;
+  const completionPct = requiredSections.length === 0 ? 100 : Math.round((filledCount / requiredSections.length) * 100);
+
   // Group attributes by category for a structured document.
   const groups = new Map<string, CvData["sections"]>();
   for (const s of cv.sections) {
@@ -94,9 +113,9 @@ export default function CvPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
+    <div className="mx-auto max-w-3xl space-y-5 print:max-w-none print:space-y-0">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 print:hidden">
         <span className={`badge ${cv.status === "PUBLISHED" ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"}`}>
           {t(`cv.status.${cv.status}`)}
         </span>
@@ -106,13 +125,21 @@ export default function CvPage() {
           </span>
         )}
         <span className="ml-auto" />
+        <button className="btn-ghost" onClick={downloadPdf}>
+          <FileDown size={14} /> {t("cv.downloadPdf")}
+        </button>
         {isRecruiter && !cv.editable && (
           <button className={cv.likedByMe ? "btn-primary" : "btn-ghost"} onClick={() => void toggleLike()}>
             <Heart size={14} fill={cv.likedByMe ? "currentColor" : "none"} /> {cv.likes}
           </button>
         )}
         {cv.editable && cv.status === "DRAFT" && (
-          <button className="btn-primary" onClick={() => void publish()} title={t("cv.publishHint")}>
+          <button
+            className="btn-primary"
+            onClick={() => void publish()}
+            disabled={completionPct < 100}
+            title={t("cv.publishHint")}
+          >
             <Send size={14} /> {t("cv.publish")}
           </button>
         )}
@@ -128,29 +155,65 @@ export default function CvPage() {
         )}
       </div>
 
-      {publishError !== null && <p className="text-sm text-red-600">{t("cv.incomplete", { n: publishError })}</p>}
+      {/* Completion towards publishing (live: updates as values are edited) */}
+      {cv.editable && cv.status === "DRAFT" && requiredSections.length > 0 && (
+        <div className="card space-y-1.5 p-3 print:hidden">
+          <div className="flex items-baseline justify-between text-xs">
+            <span className="font-medium text-slate-500 dark:text-slate-400">{t("cv.completion")}</span>
+            <span className={completionPct === 100 ? "font-semibold text-green-600 dark:text-green-400" : "text-slate-400"}>
+              {t("cv.filledOf", { filled: filledCount, total: requiredSections.length })} · {completionPct}%
+            </span>
+          </div>
+          <div
+            className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+            role="progressbar"
+            aria-valuenow={completionPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                completionPct === 100 ? "bg-green-500" : "bg-brand-500"
+              }`}
+              style={{ width: `${completionPct}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {publishError !== null && <p className="text-sm text-red-600 print:hidden">{t("cv.incomplete", { n: publishError })}</p>}
       {conflictMsg && (
-        <div className="flex items-center gap-2 rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+        <div className="flex items-center gap-2 rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 print:hidden">
           {t("common.conflict")}
           <button className="ml-auto" onClick={() => setConflictMsg(false)}><X size={14} /></button>
         </div>
       )}
 
-      {/* Rendered document */}
-      <article className="card overflow-hidden">
-        <header className="border-b border-slate-100 bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-5 text-white dark:border-slate-800">
-          <h1 className="text-2xl font-bold">{cv.user.name}</h1>
-          <p className="text-sm opacity-90">
-            {t("cv.generatedFor")}:{" "}
-            <Link to={`/positions/${cv.position.id}`} className="underline">
-              {cv.position.title}
-            </Link>
-            {cv.position.company && ` · ${cv.position.company}`}
-            {cv.position.level && ` · ${cv.position.level}`}
-          </p>
+      {/* Rendered document (the only element that appears in print/PDF) */}
+      <article className="card overflow-hidden print:rounded-none print:border-0 print:shadow-none">
+        <header className="flex items-start justify-between gap-4 border-b border-slate-100 bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-5 text-white dark:border-slate-800 print:bg-none print:px-0 print:text-slate-900">
+          <div>
+            <h1 className="text-2xl font-bold">{cv.user.name}</h1>
+            <p className="text-sm opacity-90">
+              {t("cv.generatedFor")}:{" "}
+              <Link to={`/positions/${cv.position.id}`} className="underline">
+                {cv.position.title}
+              </Link>
+              {cv.position.company && ` · ${cv.position.company}`}
+              {cv.position.level && ` · ${cv.position.level}`}
+            </p>
+          </div>
+          {/* QR code back to this CV — only in the printed/PDF document */}
+          <QRCodeSVG
+            value={window.location.href}
+            size={72}
+            marginSize={1}
+            className="hidden shrink-0 print:block"
+            aria-label={t("cv.qrHint")}
+          />
         </header>
 
-        <div className="space-y-6 px-6 py-5">
+        <div className="space-y-6 px-6 py-5 print:px-0">
           {[...groups.entries()].map(([category, sections]) => (
             <section key={category}>
               <h2 className="mb-3 border-b border-slate-100 pb-1 text-sm font-bold uppercase tracking-wide text-brand-600 dark:border-slate-800">

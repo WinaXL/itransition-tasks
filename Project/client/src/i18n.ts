@@ -70,7 +70,8 @@ const en = {
     status: { DRAFT: "Draft", PUBLISHED: "Published" }, publish: "Publish", unpublish: "Unpublish",
     publishHint: "Fill all attributes to publish", generatedFor: "CV for position", sectionProjects: "Projects",
     emptyValue: "Not filled", like: "Like", unlike: "Remove like", incomplete: "Fill all attributes first ({{n}} missing)",
-    deleteCv: "Delete CV",
+    deleteCv: "Delete CV", downloadPdf: "Download PDF", completion: "Ready to publish",
+    filledOf: "{{filled}} of {{total}} filled", qrHint: "Link to this CV",
   },
   users: {
     title: "Users", role: "Role", blocked: "Blocked", block: "Block", unblock: "Unblock",
@@ -149,7 +150,8 @@ const ru: typeof en = {
     status: { DRAFT: "Черновик", PUBLISHED: "Опубликовано" }, publish: "Опубликовать", unpublish: "Скрыть",
     publishHint: "Заполните все атрибуты для публикации", generatedFor: "Резюме для позиции", sectionProjects: "Проекты",
     emptyValue: "Не заполнено", like: "Лайк", unlike: "Убрать лайк", incomplete: "Сначала заполните все атрибуты (не хватает: {{n}})",
-    deleteCv: "Удалить резюме",
+    deleteCv: "Удалить резюме", downloadPdf: "Скачать PDF", completion: "Готовность к публикации",
+    filledOf: "Заполнено {{filled}} из {{total}}", qrHint: "Ссылка на это резюме",
   },
   users: {
     title: "Пользователи", role: "Роль", blocked: "Заблокирован", block: "Заблокировать", unblock: "Разблокировать",

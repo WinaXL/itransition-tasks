@@ -58,7 +58,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 print:hidden">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5">
           <Link to="/" className="flex items-center gap-2 font-bold text-brand-600">
             <FileText size={20} />
@@ -173,11 +173,11 @@ export default function Layout() {
         )}
       </header>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 print:max-w-none print:p-0">
         <Outlet />
       </main>
 
-      <footer className="border-t border-slate-200 py-4 text-center text-xs text-slate-400 dark:border-slate-800">
+      <footer className="border-t border-slate-200 py-4 text-center text-xs text-slate-400 dark:border-slate-800 print:hidden">
         {t("app.name")} — {t("app.tagline")}
       </footer>
     </div>

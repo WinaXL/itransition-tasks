@@ -49,6 +49,7 @@ cvsRouter.get("/:id", requireAuth, async (req, res) => {
 
   const builtIns = await prisma.attribute.findMany({ where: { builtIn: true }, orderBy: { createdAt: "asc" } });
   const positionAttrs = cv.position.attributes.map((pa) => pa.attribute);
+  const positionAttrIds = new Set(positionAttrs.map((a) => a.id));
   const shownAttrs = [...builtIns, ...positionAttrs.filter((a) => !a.builtIn)];
 
   const values = await prisma.attributeValue.findMany({
@@ -90,6 +91,8 @@ cvsRouter.get("/:id", requireAuth, async (req, res) => {
         value: v?.value ?? "",
         version: v?.version ?? null,
         category: (a as { category?: { name: string } }).category?.name ?? "Personal Information",
+        // Only position-template attributes block publishing (mirrors /publish).
+        required: positionAttrIds.has(a.id),
       };
     }),
     projects,

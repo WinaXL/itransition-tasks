@@ -65,11 +65,25 @@ export function useAutoSave(
     return () => clearInterval(timer);
   }, [flush, intervalMs]);
 
-  // Best effort flush when the user leaves the page.
+  // Best effort flush when the user leaves the page entirely.
   useEffect(() => {
     const handler = () => void flush();
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
+  }, [flush]);
+
+  // beforeunload does not fire on SPA navigation: flush pending edits when the
+  // editor unmounts (react-router route change) and when the tab is hidden,
+  // so a quick navigation never loses the current batch.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") void flush();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      void flush();
+    };
   }, [flush]);
 
   const track = useCallback((attributeId: string, value: string, version: number | null) => {
