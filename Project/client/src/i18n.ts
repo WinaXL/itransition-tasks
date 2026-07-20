@@ -13,7 +13,7 @@ const en = {
     category: "Category", actions: "Actions", selected: "selected", confirmDelete: "Delete selected item(s)?",
     saved: "Saved", saving: "Saving…", empty: "Nothing here yet", all: "All", yes: "Yes", no: "No",
     conflict: "Someone else changed this data. It was reloaded — please re-apply your change.",
-    open: "Open", download: "Download CSV",
+    open: "Open", download: "Download CSV", lightTheme: "Light", darkTheme: "Dark",
   },
   home: {
     latest: "Latest positions", popular: "Most popular positions", tags: "Technology tags", stats: "Statistics",
@@ -92,7 +92,7 @@ const ru: typeof en = {
     category: "Категория", actions: "Действия", selected: "выбрано", confirmDelete: "Удалить выбранное?",
     saved: "Сохранено", saving: "Сохранение…", empty: "Пока пусто", all: "Все", yes: "Да", no: "Нет",
     conflict: "Данные изменены другим пользователем. Они перезагружены — примените правку заново.",
-    open: "Открыть", download: "Скачать CSV",
+    open: "Открыть", download: "Скачать CSV", lightTheme: "Светлая", darkTheme: "Тёмная",
   },
   home: {
     latest: "Новые позиции", popular: "Популярные позиции", tags: "Теги технологий", stats: "Статистика",
