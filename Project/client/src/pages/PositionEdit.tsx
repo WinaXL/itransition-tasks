@@ -6,6 +6,7 @@ import { api, ApiError } from "../api";
 import { AccessRule, Attribute, Position } from "../types";
 import AttributePicker from "../components/AttributePicker";
 import TagSelect from "../components/TagSelect";
+import { localizeAttributeName } from "../localization";
 
 const OPERATORS_BY_TYPE: Record<string, string[]> = {
   STRING: ["eq", "neq", "contains"],
@@ -109,7 +110,7 @@ export default function PositionEdit() {
           {attributes.map((a) => (
             <li key={a.id} className="flex items-center gap-2 px-3 py-2 text-sm">
               <GripVertical size={14} className="text-slate-300" />
-              <span className="font-medium">{a.name}</span>
+              <span className="font-medium">{localizeAttributeName(a.name, t)}</span>
               <span className="badge bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">{t(`attrs.types.${a.type}`)}</span>
               {a.builtIn && <span className="badge bg-brand-100 text-brand-700">{t("attrs.builtIn")}</span>}
               <button className="btn-ghost ml-auto !p-1" onClick={() => setAttributes((prev) => prev.filter((x) => x.id !== a.id))}>
@@ -141,7 +142,7 @@ export default function PositionEdit() {
                   onChange={(e) => setRules((prev) => prev.map((r, j) => (j === i ? { ...r, attributeId: e.target.value, operator: "" } : r)))}
                 >
                   <option value="">{t("positions.attributes")}…</option>
-                  {ruleAttrs.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  {ruleAttrs.map((a) => <option key={a.id} value={a.id}>{localizeAttributeName(a.name, t)}</option>)}
                 </select>
                 <select
                   className="input !w-auto"

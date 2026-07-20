@@ -10,6 +10,7 @@ import TagSelect from "../components/TagSelect";
 import Md from "../components/Md";
 import DataTable, { Column } from "../components/DataTable";
 import { useAutoSave } from "../useAutoSave";
+import { localizeAttributeName, localizeCategoryName } from "../localization";
 
 export default function Profile() {
   const { t } = useTranslation();
@@ -93,7 +94,7 @@ export default function Profile() {
         <div className="grid gap-3 sm:grid-cols-2">
           {data.builtIns.map((attr) => (
             <div key={attr.id}>
-              <label className="mb-1 block text-xs font-medium text-slate-500">{attr.name}</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500">{localizeAttributeName(attr.name, t)}</label>
               {editable ? (
                 <AttributeInput attribute={attr} value={values.get(attr.id)?.value ?? ""} onChange={(v) => setValue(attr, v)} />
               ) : (
@@ -121,8 +122,8 @@ export default function Profile() {
           {libraryValues.map((v) => (
             <div key={v.attributeId} className="group">
               <div className="mb-1 flex items-center gap-2">
-                <label className="text-xs font-medium text-slate-500">{v.attribute.name}</label>
-                <span className="badge bg-slate-100 text-slate-400 dark:bg-slate-800">{v.attribute.category?.name}</span>
+                <label className="text-xs font-medium text-slate-500">{localizeAttributeName(v.attribute.name, t)}</label>
+                <span className="badge bg-slate-100 text-slate-400 dark:bg-slate-800">{localizeCategoryName(v.attribute.category?.name, t)}</span>
                 {editable && (
                   <button
                     className="invisible ml-auto text-slate-400 hover:text-red-500 group-hover:visible"
@@ -156,7 +157,7 @@ export function ValueDisplay({ attr, value }: { attr: Attribute; value: string }
     case "TEXT":
       return <Md>{value}</Md>;
     case "IMAGE":
-      return <img src={value} alt={attr.name} className="h-24 w-24 rounded-lg object-cover" />;
+      return <img src={value} alt={localizeAttributeName(attr.name, t)} className="h-24 w-24 rounded-lg object-cover" />;
     case "BOOLEAN":
       return <span className="text-sm">{value === "true" ? t("common.yes") : t("common.no")}</span>;
     case "PERIOD": {

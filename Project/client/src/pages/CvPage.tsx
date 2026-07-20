@@ -9,6 +9,7 @@ import AttributeInput from "../components/AttributeInput";
 import Md from "../components/Md";
 import { ValueDisplay } from "./Profile";
 import { useAutoSave } from "../useAutoSave";
+import { localizeAttributeName, localizeCategoryName } from "../localization";
 
 /**
  * The CV is assembled at read time from the profile: editing a value here
@@ -153,7 +154,7 @@ export default function CvPage() {
           {[...groups.entries()].map(([category, sections]) => (
             <section key={category}>
               <h2 className="mb-3 border-b border-slate-100 pb-1 text-sm font-bold uppercase tracking-wide text-brand-600 dark:border-slate-800">
-                {category}
+                {localizeCategoryName(category, t)}
               </h2>
               <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                 {sections.map((s) => {
@@ -162,7 +163,7 @@ export default function CvPage() {
                   const editing = editingAttr === s.attribute.id;
                   return (
                     <div key={s.attribute.id} className={s.attribute.type === "TEXT" ? "sm:col-span-2" : ""}>
-                      <dt className="text-xs font-medium text-slate-500">{s.attribute.name}</dt>
+                      <dt className="text-xs font-medium text-slate-500">{localizeAttributeName(s.attribute.name, t)}</dt>
                       <dd
                         className={`mt-0.5 rounded-md ${empty && !editing ? "bg-red-50 ring-1 ring-red-200 dark:bg-red-950/40 dark:ring-red-900" : ""} ${
                           cv.editable && !editing ? "cursor-pointer hover:bg-brand-50 dark:hover:bg-slate-800" : ""

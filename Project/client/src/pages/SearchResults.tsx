@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Heart } from "lucide-react";
 import { api } from "../api";
+import { localizeAttributeName } from "../localization";
 
 interface Results {
   positions: { id: string; title: string; company: string; shortdescription: string }[];
@@ -59,7 +60,7 @@ export default function SearchResults() {
           <h2 className="text-sm font-semibold uppercase text-slate-500">{t("search.attributes")}</h2>
           {results.attributes.map((a) => (
             <div key={a.id} className="card p-3">
-              <span className="font-medium">{a.name}</span>
+              <span className="font-medium">{localizeAttributeName(a.name, t)}</span>
               <span className="ml-2 text-sm text-slate-500">{a.description}</span>
             </div>
           ))}

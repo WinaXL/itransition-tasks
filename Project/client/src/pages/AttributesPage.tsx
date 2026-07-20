@@ -4,6 +4,7 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { api, ApiError } from "../api";
 import { Attribute, AttributeType, Category } from "../types";
 import DataTable, { Column } from "../components/DataTable";
+import { localizeAttributeName, localizeCategoryName } from "../localization";
 
 const TYPES: AttributeType[] = ["STRING", "TEXT", "IMAGE", "NUMERIC", "DATE", "PERIOD", "BOOLEAN", "SELECT"];
 
@@ -36,13 +37,13 @@ export default function AttributesPage() {
       header: t("common.name"),
       render: (a) => (
         <span className="font-medium">
-          {a.name} {a.builtIn && <span className="badge bg-brand-100 text-brand-700 ml-1">{t("attrs.builtIn")}</span>}
+          {localizeAttributeName(a.name, t)} {a.builtIn && <span className="badge bg-brand-100 text-brand-700 ml-1">{t("attrs.builtIn")}</span>}
         </span>
       ),
       sortValue: (a) => a.name,
     },
     { key: "type", header: t("common.type"), render: (a) => t(`attrs.types.${a.type}`), sortValue: (a) => a.type },
-    { key: "category", header: t("common.category"), render: (a) => a.category?.name ?? "", sortValue: (a) => a.category?.name ?? "" },
+    { key: "category", header: t("common.category"), render: (a) => localizeCategoryName(a.category?.name, t), sortValue: (a) => a.category?.name ?? "" },
     { key: "description", header: t("common.description"), render: (a) => <span className="line-clamp-1 max-w-md text-slate-500">{a.description}</span> },
   ];
 
@@ -127,7 +128,7 @@ function AttrForm({
           {TYPES.map((tp) => <option key={tp} value={tp}>{t(`attrs.types.${tp}`)}</option>)}
         </select>
         <select className="input" value={categoryId} onChange={(e) => setCategoryId(Number(e.target.value))}>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {categories.map((c) => <option key={c.id} value={c.id}>{localizeCategoryName(c.name, t)}</option>)}
         </select>
         <input className="input" placeholder={t("common.description")} value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>

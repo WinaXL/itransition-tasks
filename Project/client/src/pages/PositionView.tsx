@@ -7,6 +7,7 @@ import { Comment, Position } from "../types";
 import { useAuth } from "../AuthContext";
 import Md from "../components/Md";
 import DataTable, { Column } from "../components/DataTable";
+import { localizeAttributeName } from "../localization";
 
 type Tab = "overview" | "cvs" | "discussion";
 
@@ -90,7 +91,7 @@ function Overview({ position }: { position: Position }) {
           <ul className="space-y-1 text-sm">
             {position.attributes?.map((pa) => (
               <li key={pa.attribute.id} className="flex items-center gap-2">
-                <span>{pa.attribute.name}</span>
+                <span>{localizeAttributeName(pa.attribute.name, t)}</span>
                 <span className="badge bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                   {t(`attrs.types.${pa.attribute.type}`)}
                 </span>
@@ -134,7 +135,7 @@ function CvsTab({ positionId }: { positionId: string }) {
     },
     ...data.columns.map((c) => ({
       key: c.id,
-      header: c.name,
+      header: localizeAttributeName(c.name, t),
       render: (r: CvTable["rows"][number]) =>
         r.values[c.id] ? (
           c.type === "BOOLEAN" ? (r.values[c.id] === "true" ? "✓" : "✗") : <span className="line-clamp-1 max-w-48">{r.values[c.id]}</span>

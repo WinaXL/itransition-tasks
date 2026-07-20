@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Clock, Search } from "lucide-react";
 import { api } from "../api";
 import { Attribute, Category } from "../types";
+import { localizeAttributeName, localizeCategoryName } from "../localization";
 
 /**
  * Attribute Library picker: prefix lookup, category filter and
@@ -64,7 +65,7 @@ export default function AttributePicker({
         >
           <option value="">{t("common.all")}</option>
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+            <option key={c.id} value={c.id}>{localizeCategoryName(c.name, t)}</option>
           ))}
         </select>
         <button
@@ -85,11 +86,11 @@ export default function AttributePicker({
                 className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm hover:bg-brand-50 dark:hover:bg-slate-800 rounded"
                 onClick={() => onPick(a)}
               >
-                <span className="font-medium">{a.name}</span>
+                <span className="font-medium">{localizeAttributeName(a.name, t)}</span>
                 <span className="badge bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                   {t(`attrs.types.${a.type}`)}
                 </span>
-                <span className="ml-auto text-xs text-slate-400">{a.category?.name}</span>
+                <span className="ml-auto text-xs text-slate-400">{localizeCategoryName(a.category?.name, t)}</span>
               </button>
             </li>
           ))}

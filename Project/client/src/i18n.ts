@@ -40,6 +40,21 @@ const en = {
   attrs: {
     title: "Attribute Library", newAttribute: "New attribute", options: "Options (one per line)",
     builtIn: "Built-in", searchPrefix: "Search by prefix…", recent: "Recently used",
+    imageDropzone: "Drag & drop an image, or click to select",
+    imageUrl: "Image URL",
+    names: {
+      firstName: "First Name", lastName: "Last Name", location: "Location", personalPhoto: "Personal Photo",
+      aboutMe: "About Me", englishLevel: "English Level", ieltsScore: "IELTS Score", gpa: "GPA",
+      remoteWork: "Remote Work Availability", presentationSkills: "Presentation Skills", cap: "CAP",
+      python: "Python", apacheHadoop: "Apache Hadoop", availableFrom: "Available From",
+      lastEmployment: "Last Employment",
+    },
+    placeholders: { firstName: "Given name", lastName: "Family name", location: "City, Country" },
+    categories: {
+      personalInformation: "Personal Information", certification: "Certification",
+      domainKnowledge: "Domain Knowledge", softSkills: "Soft Skills",
+      technicalSkills: "Technical Skills", languages: "Languages",
+    },
     types: {
       STRING: "String", TEXT: "Text (Markdown)", IMAGE: "Image", NUMERIC: "Numeric",
       DATE: "Date", PERIOD: "Period", BOOLEAN: "Checkbox", SELECT: "Dropdown",
@@ -104,6 +119,21 @@ const ru: typeof en = {
   attrs: {
     title: "Библиотека атрибутов", newAttribute: "Новый атрибут", options: "Варианты (по одному в строке)",
     builtIn: "Встроенный", searchPrefix: "Поиск по префиксу…", recent: "Недавние",
+    imageDropzone: "Перетащите изображение сюда или кликните для выбора",
+    imageUrl: "URL изображения",
+    names: {
+      firstName: "Имя", lastName: "Фамилия", location: "Локация / Город", personalPhoto: "Личное фото",
+      aboutMe: "Обо мне", englishLevel: "Уровень английского", ieltsScore: "Баллы IELTS", gpa: "Средний балл",
+      remoteWork: "Готовность к удалённой работе", presentationSkills: "Навыки презентации", cap: "CAP",
+      python: "Python", apacheHadoop: "Apache Hadoop", availableFrom: "Доступен с",
+      lastEmployment: "Последнее место работы",
+    },
+    placeholders: { firstName: "Введите имя", lastName: "Введите фамилию", location: "Город, Страна" },
+    categories: {
+      personalInformation: "Личная информация", certification: "Сертификаты",
+      domainKnowledge: "Предметные знания", softSkills: "Гибкие навыки",
+      technicalSkills: "Технические навыки", languages: "Языки",
+    },
     types: {
       STRING: "Строка", TEXT: "Текст (Markdown)", IMAGE: "Изображение", NUMERIC: "Число",
       DATE: "Дата", PERIOD: "Период", BOOLEAN: "Флажок", SELECT: "Список",

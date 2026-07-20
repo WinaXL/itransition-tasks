@@ -1,13 +1,16 @@
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { useTranslation } from "react-i18next";
 import { ImageUp, Loader2 } from "lucide-react";
 import { Attribute } from "../types";
+import { localizeAttributePlaceholder } from "../localization";
 
 const CLOUD = import.meta.env.VITE_CLOUDINARY_CLOUD as string | undefined;
 const PRESET = import.meta.env.VITE_CLOUDINARY_PRESET as string | undefined;
 
 /** Drag-and-drop image upload straight to Cloudinary (images never touch our server). */
 function ImageInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
 
   const onDrop = useCallback(
@@ -46,10 +49,10 @@ function ImageInput({ value, onChange }: { value: string; onChange: (v: string) 
         >
           <input {...getInputProps()} />
           {uploading ? <Loader2 size={16} className="animate-spin" /> : <ImageUp size={16} />}
-          <span>Drag & drop an image, or click to select</span>
+          <span>{t("attrs.imageDropzone")}</span>
         </div>
       ) : (
-        <input className="input" value={value} onChange={(e) => onChange(e.target.value)} placeholder="Image URL" />
+        <input className="input" value={value} onChange={(e) => onChange(e.target.value)} placeholder={t("attrs.imageUrl")} />
       )}
     </div>
   );
@@ -67,11 +70,12 @@ export default function AttributeInput({
   onChange: (v: string) => void;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation();
   if (disabled) return null;
   switch (attribute.type) {
     case "TEXT":
       return (
-        <textarea className="input min-h-24" value={value} onChange={(e) => onChange(e.target.value)} placeholder={attribute.description} />
+        <textarea className="input min-h-24" value={value} onChange={(e) => onChange(e.target.value)} placeholder={localizeAttributePlaceholder(attribute, t)} />
       );
     case "NUMERIC":
       return <input type="number" className="input" value={value} onChange={(e) => onChange(e.target.value)} />;
@@ -111,6 +115,6 @@ export default function AttributeInput({
     case "IMAGE":
       return <ImageInput value={value} onChange={onChange} />;
     default:
-      return <input className="input" value={value} onChange={(e) => onChange(e.target.value)} placeholder={attribute.description} />;
+      return <input className="input" value={value} onChange={(e) => onChange(e.target.value)} placeholder={localizeAttributePlaceholder(attribute, t)} />;
   }
 }
