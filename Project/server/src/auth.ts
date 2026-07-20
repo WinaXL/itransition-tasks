@@ -29,16 +29,22 @@ export function clearToken(res: Response) {
   res.clearCookie(COOKIE);
 }
 
-/** Attaches req.user if a valid token cookie is present; never rejects. */
-export async function attachUser(req: Request, _res: Response, next: NextFunction) {
+/**
+ * Attaches req.user if a valid token cookie is present; never rejects.
+ * The user is re-read from the database on every request, so blocking or
+ * deleting an account revokes its session instantly — the stale cookie is
+ * actively destroyed rather than waiting for the JWT to expire.
+ */
+export async function attachUser(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies?.[COOKIE];
   if (token) {
     try {
       const payload = jwt.verify(token, JWT_SECRET) as { sub: string };
       const user = await prisma.user.findUnique({ where: { id: payload.sub } });
       if (user && !user.blocked) req.user = user;
+      else clearToken(res); // blocked or deleted account: kill the session cookie
     } catch {
-      /* invalid/expired token — treat as anonymous */
+      clearToken(res); // invalid/expired token: clean up and treat as anonymous
     }
   }
   next();

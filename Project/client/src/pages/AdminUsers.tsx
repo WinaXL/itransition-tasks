@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Ban, CircleCheck, Trash2 } from "lucide-react";
 import { api } from "../api";
-import { Role } from "../types";
+import { PageMeta, Paginated, Role } from "../types";
 import { useAuth } from "../AuthContext";
 import DataTable, { Column } from "../components/DataTable";
+import Pagination from "../components/Pagination";
 
 interface AdminUser {
   id: string;
@@ -23,10 +24,16 @@ export default function AdminUsers() {
   const { refresh } = useAuth();
   const navigate = useNavigate();
   const [rows, setRows] = useState<AdminUser[]>([]);
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState<PageMeta | null>(null);
 
   const load = useCallback(() => {
-    void api.get<AdminUser[]>("/api/users").then(setRows);
-  }, []);
+    void api.get<Paginated<AdminUser>>(`/api/users?page=${page}`).then(({ items, meta: m }) => {
+      setRows(items);
+      setMeta(m);
+      if (page > m.pages) setPage(m.pages);
+    });
+  }, [page]);
 
   useEffect(load, [load]);
 
@@ -99,6 +106,7 @@ export default function AdminUsers() {
           </>
         )}
       />
+      {meta && <Pagination meta={meta} onChange={setPage} />}
     </div>
   );
 }

@@ -10,7 +10,8 @@ A web-based recruitment platform: Recruiters define **positions** (CV templates)
 
 - Email/password registration and sign-in.
 - Google and GitHub OAuth.
-- JWT sessions stored in an HTTP-only, same-site cookie.
+- JWT sessions stored in an HTTP-only, same-site cookie (`secure` in production).
+- Instant session revocation: the user is re-read from the database on every request, so blocking or deleting an account kills its session immediately and destroys the stale cookie.
 - Candidate, Recruiter and Administrator role guards on both routes and API endpoints.
 - Administrator user management: list users, assign/remove roles, block/unblock and delete.
 - Anonymous users can browse positions, search public data and see platform statistics.
@@ -56,7 +57,8 @@ A web-based recruitment platform: Recruiters define **positions** (CV templates)
 
 - PostgreSQL full-text search for positions, attributes and authorized CV data.
 - Search is available from the global header.
-- Position discussions support Markdown and incremental three-second polling.
+- Offset pagination with result metadata on the positions list, admin user list and search (totals via `COUNT(*) OVER()` window function).
+- Position discussions support Markdown; new posts are pushed to all viewers via Server-Sent Events the moment they are written (no polling load).
 - Dashboard shows latest positions, popular positions, public statistics and a technology tag cloud.
 
 ### User interface
@@ -66,6 +68,14 @@ A web-based recruitment platform: Recruiters define **positions** (CV templates)
 - Tables use selection checkboxes and shared toolbars instead of action buttons in every row.
 - English and Russian UI with live language switching, including built-in attribute names, placeholders, categories and generated CV columns.
 - Light and dark themes; language/theme preferences are persisted.
+
+### Optional requirements implemented
+
+- PDF export of the generated CV via a print stylesheet (vector text, A4) with a QR code linking back to the CV.
+- Live "ready to publish" completion bar on draft CVs, mirroring the server's publish rule.
+- CSV export of a position's published CVs for analysis.
+- Achievements panel on the profile page ("10 projects", "5 CVs", "25 likes", tiered bronze/silver/gold), rendered as a standalone SVG that can be downloaded.
+- Form authentication (email + password) alongside the two social providers.
 
 ## Stack
 
@@ -87,7 +97,7 @@ A web-based recruitment platform: Recruiters define **positions** (CV templates)
 - **Relational CV storage** — attributes, templates and values are normalized relations rather than JSON documents or dynamically-created database tables. Renaming an attribute therefore updates every generated view without batch-rewriting CVs.
 - **Set-based data access** — related values are fetched in batches; database queries are not executed inside record-rendering loops.
 - **No per-row buttons** — all tables use checkbox selection + a toolbar (and click-to-open rows).
-- **Discussions** — Markdown posts, chronological, updates delivered to all viewers within ~3 s via incremental polling (`?after=<timestamp>`).
+- **Discussions over SSE** — Markdown posts, chronological. Live updates use Server-Sent Events: an in-process event bus pushes a comment to every open viewer only when one is actually written, instead of every client polling the database on a timer.
 
 ## Main data model
 

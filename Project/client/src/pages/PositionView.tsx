@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Download, FilePlus2, Heart } from "lucide-react";
@@ -187,34 +187,42 @@ function Discussion({ positionId }: { positionId: string }) {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
-  const lastRef = useRef<string | null>(null);
   const isRecruiter = user && (user.role === "RECRUITER" || user.role === "ADMIN");
 
-  // New posts appear for all viewers within a few seconds via polling.
-  const poll = useCallback(async () => {
-    const fresh = await api.get<Comment[]>(
-      `/api/positions/${positionId}/comments${lastRef.current ? `?after=${encodeURIComponent(lastRef.current)}` : ""}`
-    );
-    if (fresh.length > 0) {
-      lastRef.current = fresh[fresh.length - 1].createdAt;
-      setComments((prev) => [...prev, ...fresh]);
-    }
-  }, [positionId]);
+  // Appends a comment exactly once (the author receives it via both the POST
+  // response and the SSE stream).
+  const append = useCallback((comment: Comment) => {
+    setComments((prev) => (prev.some((c) => c.id === comment.id) ? prev : [...prev, comment]));
+  }, []);
 
+  // History is fetched once; live updates arrive over Server-Sent Events, so
+  // new posts appear for every viewer the moment they are written.
   useEffect(() => {
-    lastRef.current = null;
     setComments([]);
-    void poll();
-    const timer = setInterval(() => void poll(), 3000);
-    return () => clearInterval(timer);
-  }, [poll]);
+    let cancelled = false;
+    void api.get<Comment[]>(`/api/positions/${positionId}/comments`).then((history) => {
+      if (!cancelled) setComments((prev) => (prev.length === 0 ? history : prev));
+    });
+
+    const stream = new EventSource(`/api/positions/${positionId}/comments/stream`);
+    stream.onmessage = (event) => {
+      const comment = JSON.parse(event.data) as Comment;
+      setComments((prev) => (prev.some((c) => c.id === comment.id) ? prev : [...prev, comment]));
+    };
+    // On network errors EventSource reconnects automatically; nothing to do.
+
+    return () => {
+      cancelled = true;
+      stream.close();
+    };
+  }, [positionId]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
-    await api.post(`/api/positions/${positionId}/comments`, { text });
+    const created = await api.post<Comment>(`/api/positions/${positionId}/comments`, { text });
     setText("");
-    await poll();
+    append(created);
   };
 
   return (

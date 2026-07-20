@@ -3,9 +3,10 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../api";
-import { Position } from "../types";
+import { PageMeta, Paginated, Position } from "../types";
 import { useAuth } from "../AuthContext";
 import DataTable, { Column } from "../components/DataTable";
+import Pagination from "../components/Pagination";
 
 export default function Positions() {
   const { t } = useTranslation();
@@ -13,13 +14,22 @@ export default function Positions() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [rows, setRows] = useState<Position[]>([]);
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState<PageMeta | null>(null);
 
   const isRecruiter = user && (user.role === "RECRUITER" || user.role === "ADMIN");
 
   const load = useCallback(() => {
+    const query = new URLSearchParams({ page: String(page) });
     const q = params.get("q");
-    void api.get<Position[]>(`/api/positions${q ? `?q=${encodeURIComponent(q)}` : ""}`).then(setRows);
-  }, [params]);
+    if (q) query.set("q", q);
+    void api.get<Paginated<Position>>(`/api/positions?${query}`).then(({ items, meta: m }) => {
+      setRows(items);
+      setMeta(m);
+      // e.g. after deleting the last row of the final page
+      if (page > m.pages) setPage(m.pages);
+    });
+  }, [params, page]);
 
   useEffect(load, [load]);
 
@@ -88,6 +98,7 @@ export default function Positions() {
             : undefined
         }
       />
+      {meta && <Pagination meta={meta} onChange={setPage} />}
     </div>
   );
 }

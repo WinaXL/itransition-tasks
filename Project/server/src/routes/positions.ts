@@ -4,7 +4,18 @@ import { prisma } from "../prisma";
 import { isRecruiter, requireAuth, requireRole } from "../auth";
 import { updateVersioned, CONFLICT } from "../lock";
 import { accessiblePositionIds } from "../access";
-import { Position } from "@prisma/client";
+import { eventBus, commentChannel } from "../events";
+import { Comment, Position, Prisma, User } from "@prisma/client";
+
+export function parsePagination(query: Record<string, unknown>, defaultLimit = 20) {
+  const page = Math.max(1, Number(query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(query.limit) || defaultLimit));
+  return { page, limit, skip: (page - 1) * limit };
+}
+
+export function paginationMeta(total: number, page: number, limit: number) {
+  return { total, page, limit, pages: Math.max(1, Math.ceil(total / limit)) };
+}
 
 export const positionsRouter = Router();
 
@@ -15,28 +26,38 @@ const includeAll = {
   _count: { select: { cvs: true, comments: true } },
 };
 
-// Anonymous users may browse positions read-only.
+// Anonymous users may browse positions read-only. Paginated: ?page=&limit=.
 positionsRouter.get("/", async (req, res) => {
   const { q, level, sort } = req.query;
-  const positions = await prisma.position.findMany({
-    where: q
+  const { page, limit, skip } = parsePagination(req.query);
+  const where: Prisma.PositionWhereInput = {
+    ...(q
       ? { OR: [{ title: { contains: String(q), mode: "insensitive" } }, { company: { contains: String(q), mode: "insensitive" } }] }
-      : undefined,
-    ...(level ? { where: { level: String(level) } } : {}),
-    include: { _count: { select: { cvs: true } } },
-    orderBy: sort === "cvs" ? { cvs: { _count: "desc" } } : { updatedAt: "desc" },
-  });
+      : {}),
+    ...(level ? { level: String(level) } : {}),
+  };
+  const [total, positions] = await prisma.$transaction([
+    prisma.position.count({ where }),
+    prisma.position.findMany({
+      where,
+      include: { _count: { select: { cvs: true } } },
+      orderBy: sort === "cvs" ? { cvs: { _count: "desc" } } : { updatedAt: "desc" },
+      skip,
+      take: limit,
+    }),
+  ]);
   const accessible =
     req.user && req.user.role === "CANDIDATE"
       ? await accessiblePositionIds(req.user.id, positions)
       : new Set(positions.map((p) => p.id)); // recruiters/admins/anon see the whole catalogue
-  res.json(
-    positions.map((p) => ({
+  res.json({
+    items: positions.map((p) => ({
       ...p,
       cvCount: p._count.cvs,
       accessible: req.user ? accessible.has(p.id) : false,
-    }))
-  );
+    })),
+    meta: paginationMeta(total, page, limit),
+  });
 });
 
 positionsRouter.get("/:id", async (req, res) => {
@@ -213,7 +234,8 @@ positionsRouter.get("/:id/cvs.csv", requireRole("RECRUITER"), async (req, res) =
   res.send([header, ...lines].join("\n"));
 });
 
-// ---------- Discussion (clients poll every few seconds) ----------
+// ---------- Discussion ----------
+// History is fetched once; live updates are delivered over SSE (see /stream).
 positionsRouter.get("/:id/comments", async (req, res) => {
   const after = req.query.after ? new Date(String(req.query.after)) : undefined;
   const comments = await prisma.comment.findMany({
@@ -224,6 +246,32 @@ positionsRouter.get("/:id/comments", async (req, res) => {
   res.json(comments);
 });
 
+/**
+ * Server-Sent Events stream: pushes a comment to every open viewer the moment
+ * it is written, instead of each client polling the database every 3 seconds.
+ */
+positionsRouter.get("/:id/comments/stream", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  const channel = commentChannel(req.params.id);
+  const push = (comment: Comment & { author: Pick<User, "id" | "name" | "avatarUrl"> }) => {
+    res.write(`id: ${comment.id}\ndata: ${JSON.stringify(comment)}\n\n`);
+  };
+  eventBus.on(channel, push);
+
+  // Comment lines keep proxies (e.g. Render's) from closing the idle socket.
+  const heartbeat = setInterval(() => res.write(":hb\n\n"), 25_000);
+
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    eventBus.off(channel, push);
+    res.end();
+  });
+});
+
 positionsRouter.post("/:id/comments", requireAuth, async (req, res) => {
   const parsed = z.object({ text: z.string().min(1).max(5000) }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "invalid_input" });
@@ -231,5 +279,6 @@ positionsRouter.post("/:id/comments", requireAuth, async (req, res) => {
     data: { positionId: req.params.id, authorId: req.user!.id, text: parsed.data.text },
     include: { author: { select: { id: true, name: true, avatarUrl: true } } },
   });
+  eventBus.emit(commentChannel(req.params.id), comment);
   res.json(comment);
 });

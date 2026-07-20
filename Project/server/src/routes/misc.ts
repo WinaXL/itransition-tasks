@@ -3,44 +3,63 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 import { isRecruiter, requireRole } from "../auth";
+import { parsePagination, paginationMeta } from "./positions";
 
 export const searchRouter = Router();
 export const homeRouter = Router();
 export const usersRouter = Router();
 
+/** Strips the window-function total off raw rows into a { items, total } pair. */
+function unwrapTotal<T extends { total?: number }>(rows: T[]) {
+  const total = rows[0]?.total ?? 0;
+  return { items: rows.map(({ total: _total, ...rest }) => rest), total };
+}
+
 /**
  * Full-text search (header search box) built on PostgreSQL's native engine:
- * to_tsvector / websearch_to_tsquery with a relevance ranking.
+ * to_tsvector / websearch_to_tsquery with relevance ranking. Paginated with
+ * LIMIT/OFFSET; totals come from a COUNT(*) OVER() window so each result set
+ * needs a single query.
  */
 searchRouter.get("/", async (req, res) => {
   const q = String(req.query.q || "").trim();
-  if (!q) return res.json({ positions: [], attributes: [], cvs: [] });
+  const { page, limit, skip } = parsePagination(req.query);
+  const empty = { items: [], total: 0 };
+  if (!q) return res.json({ positions: empty, attributes: empty, cvs: empty, meta: paginationMeta(0, page, limit) });
 
-  const positions = await prisma.$queryRaw<
-    { id: string; title: string; company: string; shortdescription: string; rank: number }[]
+  const positionRows = await prisma.$queryRaw<
+    { id: string; title: string; company: string; shortdescription: string; rank: number; total: number }[]
   >(Prisma.sql`
     SELECT id, title, company, "shortDescription" AS shortdescription,
            ts_rank(to_tsvector('simple', title || ' ' || company || ' ' || "shortDescription"),
-                   websearch_to_tsquery('simple', ${q})) AS rank
+                   websearch_to_tsquery('simple', ${q})) AS rank,
+           COUNT(*) OVER()::int AS total
     FROM "Position"
     WHERE to_tsvector('simple', title || ' ' || company || ' ' || "shortDescription")
           @@ websearch_to_tsquery('simple', ${q})
-    ORDER BY rank DESC LIMIT 20`);
+    ORDER BY rank DESC
+    LIMIT ${limit} OFFSET ${skip}`);
+  const positions = unwrapTotal(positionRows);
 
-  let attributes: unknown[] = [];
-  let cvs: unknown[] = [];
+  let attributes = empty as { items: unknown[]; total: number };
+  let cvs = empty as { items: unknown[]; total: number };
   if (req.user) {
-    attributes = await prisma.$queryRaw(Prisma.sql`
-      SELECT id, name, description
+    const attributeRows = await prisma.$queryRaw<{ id: string; name: string; description: string; total: number }[]>(Prisma.sql`
+      SELECT id, name, description, COUNT(*) OVER()::int AS total
       FROM "Attribute"
       WHERE to_tsvector('simple', name || ' ' || description) @@ websearch_to_tsquery('simple', ${q})
-      LIMIT 20`);
+      ORDER BY name
+      LIMIT ${limit} OFFSET ${skip}`);
+    attributes = unwrapTotal(attributeRows);
   }
   if (isRecruiter(req)) {
     // Published CVs matched by candidate name, attribute values or project text.
-    cvs = await prisma.$queryRaw(Prisma.sql`
-      SELECT DISTINCT c.id, u.name AS "userName", p.title AS "positionTitle",
-             (SELECT COUNT(*)::int FROM "Like" l WHERE l."cvId" = c.id) AS likes
+    const cvRows = await prisma.$queryRaw<
+      { id: string; userName: string; positionTitle: string; likes: number; total: number }[]
+    >(Prisma.sql`
+      SELECT c.id, u.name AS "userName", p.title AS "positionTitle",
+             (SELECT COUNT(*)::int FROM "Like" l WHERE l."cvId" = c.id) AS likes,
+             COUNT(*) OVER()::int AS total
       FROM "Cv" c
       JOIN "User" u ON u.id = c."userId"
       JOIN "Position" p ON p.id = c."positionId"
@@ -55,9 +74,12 @@ searchRouter.get("/", async (req, res) => {
           WHERE pr."userId" = c."userId"
             AND to_tsvector('simple', pr.name || ' ' || pr.description) @@ websearch_to_tsquery('simple', ${q}))
       )
-      LIMIT 20`);
+      ORDER BY u.name
+      LIMIT ${limit} OFFSET ${skip}`);
+    cvs = unwrapTotal(cvRows);
   }
-  res.json({ positions, attributes, cvs });
+  const maxTotal = Math.max(positions.total, attributes.total, cvs.total);
+  res.json({ positions, attributes, cvs, meta: paginationMeta(maxTotal, page, limit) });
 });
 
 /** Main page data: latest & popular positions, tag cloud, public statistics. */
@@ -99,17 +121,22 @@ homeRouter.get("/", async (req, res) => {
   });
 });
 
-// ---------- Admin: user management ----------
-usersRouter.get("/", requireRole("ADMIN"), async (_req, res) => {
-  res.json(
-    await prisma.user.findMany({
+// ---------- Admin: user management (paginated: ?page=&limit=) ----------
+usersRouter.get("/", requireRole("ADMIN"), async (req, res) => {
+  const { page, limit, skip } = parsePagination(req.query);
+  const [total, items] = await prisma.$transaction([
+    prisma.user.count(),
+    prisma.user.findMany({
       select: {
         id: true, email: true, name: true, role: true, blocked: true, provider: true, createdAt: true,
         _count: { select: { cvs: true, projects: true } },
       },
       orderBy: { createdAt: "desc" },
-    })
-  );
+      skip,
+      take: limit,
+    }),
+  ]);
+  res.json({ items, meta: paginationMeta(total, page, limit) });
 });
 
 usersRouter.patch("/:id", requireRole("ADMIN"), async (req, res) => {

@@ -78,6 +78,10 @@ const en = {
     makeAdmin: "Make Admin", makeRecruiter: "Make Recruiter", makeCandidate: "Make Candidate", provider: "Sign-in",
   },
   search: { results: "Search results for “{{q}}”", positions: "Positions", attributes: "Attributes", cvs: "CVs", nothing: "Nothing found" },
+  badges: {
+    title: "Achievements", download: "Download SVG",
+    projects: "{{n}} projects", cvs: "{{n}} CVs", likes: "{{n}} likes",
+  },
 };
 
 // Russian translation of the same keys.
@@ -158,6 +162,10 @@ const ru: typeof en = {
     makeAdmin: "Сделать админом", makeRecruiter: "Сделать рекрутёром", makeCandidate: "Сделать кандидатом", provider: "Вход",
   },
   search: { results: "Результаты поиска «{{q}}»", positions: "Позиции", attributes: "Атрибуты", cvs: "Резюме", nothing: "Ничего не найдено" },
+  badges: {
+    title: "Достижения", download: "Скачать SVG",
+    projects: "{{n}} проектов", cvs: "{{n}} резюме", likes: "{{n}} лайков",
+  },
 };
 
 i18n.use(initReactI18next).init({

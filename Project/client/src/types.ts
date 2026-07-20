@@ -1,4 +1,16 @@
 export type Role = "CANDIDATE" | "RECRUITER" | "ADMIN";
+
+export interface PageMeta {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+export interface Paginated<T> {
+  items: T[];
+  meta: PageMeta;
+}
 export type AttributeType = "STRING" | "TEXT" | "IMAGE" | "NUMERIC" | "DATE" | "PERIOD" | "BOOLEAN" | "SELECT";
 export type CvStatus = "DRAFT" | "PUBLISHED";
 
