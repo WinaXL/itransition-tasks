@@ -1,5 +1,6 @@
 import { Request, Router } from "express";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 import { isAdmin, isRecruiter, requireAuth } from "../auth";
 import { accessiblePositionIds } from "../access";
@@ -95,37 +96,82 @@ profileRouter.patch("/:userId/values", requireAuth, async (req, res) => {
   const parsed = saveSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "invalid_input" });
   const { userId } = req.params;
+  const items = parsed.data.values;
+  const attributeIds = items.map((v) => v.attributeId);
 
-  const attributes = await prisma.attribute.findMany({
-    where: { id: { in: parsed.data.values.map((v) => v.attributeId) } },
-  });
+  const [attributes, existingRows] = await Promise.all([
+    prisma.attribute.findMany({ where: { id: { in: attributeIds } }, select: { id: true, type: true } }),
+    prisma.attributeValue.findMany({ where: { userId, attributeId: { in: attributeIds } } }),
+  ]);
   const typeOf = new Map(attributes.map((a) => [a.id, a.type]));
+  const existing = new Map(existingRows.map((r) => [r.attributeId, r]));
 
+  // Classify in memory only — no queries inside this loop. Writes are then
+  // executed as two set-based statements (one INSERT, one UPDATE) below.
+  type Pending = { attributeId: string; value: string; valueNum: number | null; expectedVersion: number };
+  const inserts: Prisma.AttributeValueCreateManyInput[] = [];
+  const updates: Pending[] = [];
   const results: { attributeId: string; version?: number; conflict?: boolean; current?: string }[] = [];
-  for (const item of parsed.data.values) {
+
+  for (const item of items) {
     const valueNum = typeOf.get(item.attributeId) === "NUMERIC" ? parseFloat(item.value) || null : null;
-    if (item.version === null) {
-      const created = await prisma.attributeValue.upsert({
-        where: { userId_attributeId: { userId, attributeId: item.attributeId } },
-        update: { value: item.value, valueNum, version: { increment: 1 } },
-        create: { userId, attributeId: item.attributeId, value: item.value, valueNum },
-      });
-      results.push({ attributeId: item.attributeId, version: created.version });
-    } else {
-      const { count } = await prisma.attributeValue.updateMany({
-        where: { userId, attributeId: item.attributeId, version: item.version },
-        data: { value: item.value, valueNum, version: { increment: 1 } },
-      });
-      if (count === 0) {
-        const current = await prisma.attributeValue.findUnique({
-          where: { userId_attributeId: { userId, attributeId: item.attributeId } },
-        });
-        results.push({ attributeId: item.attributeId, conflict: true, current: current?.value, version: current?.version });
+    const row = existing.get(item.attributeId);
+    if (!row) {
+      if (item.version === null) {
+        inserts.push({ userId, attributeId: item.attributeId, value: item.value, valueNum });
       } else {
-        results.push({ attributeId: item.attributeId, version: item.version + 1 });
+        // Client knew a version but the row is gone (attribute value deleted concurrently).
+        results.push({ attributeId: item.attributeId, conflict: true });
+      }
+    } else if (item.version !== null && item.version !== row.version) {
+      // Stale client version: report the conflict straight from the batch read.
+      results.push({ attributeId: item.attributeId, conflict: true, current: row.value, version: row.version });
+    } else {
+      updates.push({ attributeId: item.attributeId, value: item.value, valueNum, expectedVersion: row.version });
+    }
+  }
+
+  if (inserts.length > 0) {
+    await prisma.attributeValue.createMany({ data: inserts, skipDuplicates: true });
+    for (const ins of inserts) results.push({ attributeId: ins.attributeId, version: 1 });
+  }
+
+  if (updates.length > 0) {
+    // Single set-based UPDATE for the whole batch; the version guard in the
+    // WHERE clause preserves optimistic locking per row.
+    const rows = updates.map(
+      (u) => Prisma.sql`(${u.attributeId}::text, ${u.value}::text, ${u.valueNum}::float8, ${u.expectedVersion}::int)`
+    );
+    const updated = await prisma.$queryRaw<{ attributeId: string; version: number }[]>(Prisma.sql`
+      UPDATE "AttributeValue" AS av
+      SET "value" = v."value", "valueNum" = v."valueNum", "version" = av."version" + 1, "updatedAt" = now()
+      FROM (VALUES ${Prisma.join(rows)}) AS v("attributeId", "value", "valueNum", "version")
+      WHERE av."userId" = ${userId} AND av."attributeId" = v."attributeId" AND av."version" = v."version"
+      RETURNING av."attributeId", av."version"
+    `);
+    const newVersions = new Map(updated.map((r) => [r.attributeId, r.version]));
+
+    // Rows that raced between our read and the update: fetch their current
+    // state in one extra query (only when a conflict actually happened).
+    const raced = updates.filter((u) => !newVersions.has(u.attributeId));
+    const racedRows = raced.length
+      ? await prisma.attributeValue.findMany({
+          where: { userId, attributeId: { in: raced.map((u) => u.attributeId) } },
+        })
+      : [];
+    const racedById = new Map(racedRows.map((r) => [r.attributeId, r]));
+
+    for (const u of updates) {
+      const version = newVersions.get(u.attributeId);
+      if (version !== undefined) {
+        results.push({ attributeId: u.attributeId, version });
+      } else {
+        const current = racedById.get(u.attributeId);
+        results.push({ attributeId: u.attributeId, conflict: true, current: current?.value, version: current?.version });
       }
     }
   }
+
   res.json({ results });
 });
 
