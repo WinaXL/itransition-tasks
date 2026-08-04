@@ -41,6 +41,9 @@ model User {
   blocked      Boolean  @default(false)
   language     String   @default("en")
   theme        String   @default("light")
+  // Salesforce CRM ids, filled by the "Sync to CRM" profile action
+  sfAccountId  String?
+  sfContactId  String?
   version      Int      @default(1)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -137,6 +140,8 @@ model Position {
   level            String   @default("")
   isPublic         Boolean  @default(true)
   maxProjects      Int      @default(3)
+  // Per-position token for the external read-only aggregates API (Odoo import)
+  apiToken         String?  @unique
   version          Int      @default(1)
   createdById      String?
   createdBy        User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)

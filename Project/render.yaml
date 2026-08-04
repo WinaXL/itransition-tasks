@@ -35,6 +35,20 @@ services:
         sync: false
       - key: VITE_CLOUDINARY_PRESET
         sync: false
+      # Salesforce Connected App (CRM sync)
+      - key: SF_CLIENT_ID
+        sync: false
+      - key: SF_CLIENT_SECRET
+        sync: false
+      - key: SF_LOGIN_URL
+        sync: false
+      # Dropbox (support tickets → Power Automate)
+      - key: DROPBOX_APP_KEY
+        sync: false
+      - key: DROPBOX_APP_SECRET
+        sync: false
+      - key: DROPBOX_REFRESH_TOKEN
+        sync: false
 
 databases:
   - name: cvforge-db

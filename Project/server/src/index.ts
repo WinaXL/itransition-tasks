@@ -9,6 +9,7 @@ import { positionsRouter } from "./routes/positions";
 import { profileRouter, tagsRouter } from "./routes/profile";
 import { cvsRouter } from "./routes/cvs";
 import { homeRouter, searchRouter, usersRouter } from "./routes/misc";
+import { salesforceRouter, externalRouter, supportRouter } from "./routes/integrations";
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
@@ -24,6 +25,9 @@ app.use("/api/cvs", cvsRouter);
 app.use("/api/search", searchRouter);
 app.use("/api/home", homeRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/salesforce", salesforceRouter);
+app.use("/api/external", externalRouter);
+app.use("/api/support", supportRouter);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 

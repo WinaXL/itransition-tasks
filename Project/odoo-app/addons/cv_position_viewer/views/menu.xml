@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_cv_root" name="CVForge" sequence="60"/>
+    <menuitem id="menu_cv_positions" name="Imported Positions" parent="menu_cv_root"
+              action="action_cv_position" sequence="10"/>
+    <menuitem id="menu_cv_import" name="Import from CVForge" parent="menu_cv_root"
+              action="action_cv_position_import" sequence="20"/>
+</odoo>

@@ -10,6 +10,7 @@ import TagSelect from "../components/TagSelect";
 import Md from "../components/Md";
 import DataTable, { Column } from "../components/DataTable";
 import Badges from "../components/Badges";
+import SalesforceSync from "../components/SalesforceSync";
 import { useAutoSave } from "../useAutoSave";
 import { localizeAttributeName, localizeCategoryName } from "../localization";
 
@@ -148,6 +149,7 @@ export default function Profile() {
       <ProjectsSection data={data} editable={editable} reload={load} userId={userId!} />
       <CvsSection data={data} />
       <Badges data={data} />
+      {editable && <SalesforceSync data={data} />}
     </div>
   );
 }

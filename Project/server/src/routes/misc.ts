@@ -89,11 +89,13 @@ homeRouter.get("/", async (req, res) => {
     prisma.position.findMany({
       orderBy: { updatedAt: "desc" },
       take: 10,
+      omit: { apiToken: true }, // public endpoint: never expose the external-API token
       include: { _count: { select: { cvs: true } } },
     }),
     prisma.position.findMany({
       orderBy: { cvs: { _count: "desc" } },
       take: 5,
+      omit: { apiToken: true },
       include: { _count: { select: { cvs: true } } },
     }),
     Promise.all([

@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../prisma";
@@ -51,7 +52,7 @@ positionsRouter.get("/", async (req, res) => {
       ? await accessiblePositionIds(req.user.id, positions)
       : new Set(positions.map((p) => p.id)); // recruiters/admins/anon see the whole catalogue
   res.json({
-    items: positions.map((p) => ({
+    items: positions.map(({ apiToken: _token, ...p }) => ({
       ...p,
       cvCount: p._count.cvs,
       accessible: req.user ? accessible.has(p.id) : false,
@@ -73,7 +74,22 @@ positionsRouter.get("/:id", async (req, res) => {
     });
     myCvId = cv?.id ?? null;
   }
-  res.json({ ...position, accessible, myCvId, canEdit: isRecruiter(req) });
+  // The external-API token is only shown to recruiters/admins.
+  const { apiToken, ...rest } = position;
+  res.json({ ...rest, apiToken: isRecruiter(req) ? apiToken : undefined, accessible, myCvId, canEdit: isRecruiter(req) });
+});
+
+/**
+ * (Re)generates the per-position token for the external read-only aggregates
+ * API (GET /api/external/position) consumed by the Odoo integration.
+ */
+positionsRouter.post("/:id/token", requireRole("RECRUITER"), async (req, res) => {
+  const token = randomBytes(24).toString("hex");
+  const position = await prisma.position
+    .update({ where: { id: req.params.id }, data: { apiToken: token } })
+    .catch(() => null);
+  if (!position) return res.status(404).json({ error: "not_found" });
+  res.json({ token });
 });
 
 const positionSchema = z.object({

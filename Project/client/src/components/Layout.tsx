@@ -1,8 +1,9 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FileText, Moon, Search, Sun, Menu, X } from "lucide-react";
+import { FileText, LifeBuoy, Moon, Search, Sun, Menu, X } from "lucide-react";
 import { useAuth } from "../AuthContext";
+import SupportTicket from "./SupportTicket";
 
 export default function Layout() {
   const { t, i18n } = useTranslation();
@@ -10,6 +11,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [ticketOpen, setTicketOpen] = useState(false);
 
   const submitSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -68,6 +70,11 @@ export default function Layout() {
 
           <div className="ml-auto hidden min-w-0 flex-1 items-center justify-end gap-2 lg:flex">
             {searchForm()}
+            {user && (
+              <button className="btn-ghost !px-2" onClick={() => setTicketOpen(true)} aria-label={t("support.title")} title={t("support.title")}>
+                <LifeBuoy size={17} />
+              </button>
+            )}
             <button className="btn-ghost !px-2" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Theme">
               {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
             </button>
@@ -122,6 +129,17 @@ export default function Layout() {
             <nav className="mx-auto flex max-w-7xl flex-col gap-1">{renderLinks()}</nav>
             <div className="mx-auto mt-4 flex max-w-7xl flex-col gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
               {searchForm(true)}
+              {user && (
+                <button
+                  className="btn-ghost justify-center"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setTicketOpen(true);
+                  }}
+                >
+                  <LifeBuoy size={17} /> {t("support.title")}
+                </button>
+              )}
               <div className="flex items-center gap-2">
                 <button className="btn-ghost flex-1 justify-center" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
                   {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
@@ -179,7 +197,17 @@ export default function Layout() {
 
       <footer className="border-t border-slate-200 py-4 text-center text-xs text-slate-400 dark:border-slate-800 print:hidden">
         {t("app.name")} — {t("app.tagline")}
+        {user && (
+          <>
+            {" · "}
+            <button className="underline hover:text-brand-600" onClick={() => setTicketOpen(true)}>
+              {t("support.link")}
+            </button>
+          </>
+        )}
       </footer>
+
+      {ticketOpen && <SupportTicket onClose={() => setTicketOpen(false)} />}
     </div>
   );
 }

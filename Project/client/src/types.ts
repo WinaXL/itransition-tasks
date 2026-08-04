@@ -86,6 +86,8 @@ export interface Position {
   accessible?: boolean;
   canEdit?: boolean;
   myCvId?: string | null;
+  /** External aggregates API token — present for recruiters/admins only. */
+  apiToken?: string | null;
   attributes?: { attribute: Attribute; sortOrder: number }[];
   projectTags?: { tag: Tag }[];
   accessRules?: AccessRule[];
@@ -123,7 +125,15 @@ export interface Comment {
 }
 
 export interface ProfileData {
-  user: { id: string; name: string; email: string; avatarUrl: string | null; role: Role };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+    role: Role;
+    sfAccountId?: string | null;
+    sfContactId?: string | null;
+  };
   editable: boolean;
   builtIns: Attribute[];
   values: AttributeValue[];

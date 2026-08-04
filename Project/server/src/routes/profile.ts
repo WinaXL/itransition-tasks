@@ -23,7 +23,10 @@ profileRouter.get("/:userId", requireAuth, async (req, res) => {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, name: true, email: true, avatarUrl: true, role: true, createdAt: true },
+    select: {
+      id: true, name: true, email: true, avatarUrl: true, role: true, createdAt: true,
+      sfAccountId: true, sfContactId: true,
+    },
   });
   if (!user) return res.status(404).json({ error: "not_found" });
 

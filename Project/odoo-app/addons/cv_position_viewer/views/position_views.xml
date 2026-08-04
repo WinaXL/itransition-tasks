@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Read-only viewer: records are created only by the import wizard. -->
+    <record id="view_cv_position_tree" model="ir.ui.view">
+        <field name="name">cv.position.tree</field>
+        <field name="model">cv.position</field>
+        <field name="arch" type="xml">
+            <tree create="false" edit="false">
+                <field name="name"/>
+                <field name="company"/>
+                <field name="level"/>
+                <field name="cv_count"/>
+                <field name="imported_at"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_cv_position_form" model="ir.ui.view">
+        <field name="name">cv.position.form</field>
+        <field name="model">cv.position</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company"/>
+                            <field name="level"/>
+                            <field name="cv_count"/>
+                        </group>
+                        <group>
+                            <field name="source_url" widget="url"/>
+                            <field name="imported_at"/>
+                            <field name="api_token" password="True"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Aggregated Results">
+                            <field name="attribute_ids">
+                                <tree create="false" edit="false" delete="false">
+                                    <field name="name"/>
+                                    <field name="attr_type"/>
+                                    <field name="filled_count"/>
+                                    <field name="avg_value"/>
+                                    <field name="min_value"/>
+                                    <field name="max_value"/>
+                                    <field name="popular_values"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cv_position" model="ir.actions.act_window">
+        <field name="name">Imported Positions</field>
+        <field name="res_model">cv.position</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No positions imported yet</p>
+            <p>Use <b>Import from CVForge</b> and paste the api token generated on the position form.</p>
+        </field>
+    </record>
+</odoo>

@@ -77,6 +77,47 @@ A web-based recruitment platform: Recruiters define **positions** (CV templates)
 - Achievements panel on the profile page ("10 projects", "5 CVs", "25 likes", tiered bronze/silver/gold), rendered as a standalone SVG that can be downloaded.
 - Form authentication (email + password) alongside the two social providers.
 
+## External integrations
+
+### Salesforce CRM
+
+A **"Sync to CRM"** action on the profile page (visible only to the profile owner in any role, or an admin) opens a form collecting extra details — company, phone, job title, industry, website, notes. Submitting it creates an **Account with a linked Contact** in Salesforce via the REST API (`/services/data/v61.0/sobjects/...`). The Contact is filled from the non-removable profile fields (name, e-mail, built-in First/Last Name and Location); the Account gets the form data. The Salesforce record IDs are stored on the user, so repeating the action **updates** the same records instead of duplicating them.
+
+Setup (Salesforce Developer org):
+
+1. Create a Connected App: *Setup → App Manager → New Connected App*, enable OAuth, add the *Manage user data via APIs (api)* scope, and enable the **Client Credentials Flow** with a run-as user in the app policies.
+2. Put the Consumer Key/Secret into `SF_CLIENT_ID` / `SF_CLIENT_SECRET`, and your org URL (e.g. `https://yourdomain-dev-ed.develop.my.salesforce.com`) into `SF_LOGIN_URL`.
+
+### Odoo (read-only position viewer)
+
+The application exposes an **externally accessible aggregates API** guarded by an api token that is **generated per position** (position edit form → *External API token*). A token grants read-only access to the data of that single position only:
+
+```
+GET /api/external/position?token=<api-token>
+```
+
+The response contains the position title and, for every attribute, its title and type plus an aggregated result over published CVs: **average/min/max** for numeric attributes and the **most popular values** for text-like ones. Individual candidate data is never exposed.
+
+The repository ships a custom **Odoo 17 addon** (`odoo-app/addons/cv_position_viewer`) that acts as a read-only viewer: an *Import from CVForge* action asks for the base URL + api token, fetches the aggregates and upserts the position; users can browse the imported list and open a detailed per-position view. `odoo-app/docker-compose.yml` rolls out a complete Odoo instance with the addon mounted — see `odoo-app/README.md` for step-by-step instructions.
+
+### Power Automate (support tickets)
+
+Any signed-in user can open **"Create support ticket"** (life-buoy icon in the header, or the link in the page footer), enter a summary and a priority (High / Average / Low), and submit. The server builds a JSON file with:
+
+- `reportedBy` — current user with their role,
+- `position` — the title of the corresponding position when the ticket is created from a position/CV page (resolved from the link),
+- `link` — the page the ticket was invoked from,
+- `priority`, `summary`, `adminEmails` (all admins), `createdAt`,
+
+and uploads it via the API to **Dropbox** (`/support-tickets/…json`). A Power Automate cloud flow completes the pipeline:
+
+1. **Trigger**: Dropbox — *When a file is created* (folder `/support-tickets`).
+2. **Get file content**, then **Parse JSON** with a schema matching the fields above.
+3. **Send e-mail (Gmail connector)** to the addresses from `adminEmails`, with the subject/body composed from the parsed fields (priority, reporter, position, link, summary).
+4. **Send a mobile notification** (Power Automate mobile app) to the flow owner ("super-admin") account.
+
+Dropbox setup: create an app at dropbox.com/developers with the `files.content.write` scope and either paste a generated `DROPBOX_ACCESS_TOKEN`, or (recommended — tokens never expire) set `DROPBOX_APP_KEY` / `DROPBOX_APP_SECRET` / `DROPBOX_REFRESH_TOKEN`.
+
 ## Stack
 
 | Layer     | Technology |
@@ -131,7 +172,9 @@ Project/
 │       ├── auth.ts    JWT session + role guards
 │       ├── lock.ts    optimistic-locking helper
 │       ├── access.ts  position access-rule evaluation
-│       └── routes/    auth, attributes, positions, profile, cvs, misc(search/home/users)
+│       └── routes/    auth, attributes, positions, profile, cvs, misc(search/home/users),
+│                      integrations (Salesforce, external aggregates API, support tickets)
+├── odoo-app/          Odoo 17 addon (read-only position viewer) + docker-compose
 └── client/            React SPA (Vite + Tailwind)
     └── src/
         ├── components/  DataTable, AttributePicker, AttributeInput, TagSelect, Layout, Md
@@ -209,6 +252,8 @@ Required runtime/build environment variables:
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OAuth credentials |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub OAuth credentials |
 | `VITE_CLOUDINARY_CLOUD`, `VITE_CLOUDINARY_PRESET` | Public Cloudinary unsigned-upload configuration baked into the SPA |
+| `SF_CLIENT_ID`, `SF_CLIENT_SECRET`, `SF_LOGIN_URL` | Salesforce Connected App (client-credentials flow) for the CRM sync |
+| `DROPBOX_ACCESS_TOKEN` *or* `DROPBOX_APP_KEY` + `DROPBOX_APP_SECRET` + `DROPBOX_REFRESH_TOKEN` | Dropbox app used to upload support-ticket JSON files for the Power Automate flow |
 
 Never commit `.env` files or OAuth/database secrets. The repository tracks only placeholder `.env.example` files.
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { GripVertical, Plus, X } from "lucide-react";
+import { Check, Copy, GripVertical, KeyRound, Plus, X } from "lucide-react";
 import { api, ApiError } from "../api";
 import { AccessRule, Attribute, Position } from "../types";
 import AttributePicker from "../components/AttributePicker";
@@ -36,6 +36,8 @@ export default function PositionEdit() {
   const [rules, setRules] = useState<AccessRule[]>([]);
   const [version, setVersion] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [apiToken, setApiToken] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -50,8 +52,22 @@ export default function PositionEdit() {
       setProjectTags(p.projectTags?.map((pt) => pt.tag.name) ?? []);
       setRules(p.accessRules?.map((r) => ({ attributeId: r.attributeId, operator: r.operator, value: r.value, attribute: r.attribute })) ?? []);
       setVersion(p.version);
+      setApiToken(p.apiToken ?? null);
     });
   }, [id]);
+
+  const generateToken = async () => {
+    const { token } = await api.post<{ token: string }>(`/api/positions/${id}/token`);
+    setApiToken(token);
+    setCopied(false);
+  };
+
+  const copyToken = async () => {
+    if (!apiToken) return;
+    await navigator.clipboard.writeText(apiToken);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const save = async () => {
     setError(null);
@@ -178,6 +194,29 @@ export default function PositionEdit() {
           })}
           <button className="btn-ghost" onClick={() => setRules((prev) => [...prev, { attributeId: "", operator: "", value: "" }])}>
             <Plus size={14} /> {t("positions.addRule")}
+          </button>
+        </section>
+      )}
+
+      {!isNew && (
+        <section className="card p-4 space-y-2">
+          <h2 className="flex items-center gap-2 font-semibold"><KeyRound size={15} /> {t("positions.apiToken")}</h2>
+          <p className="text-xs text-slate-400">{t("positions.apiTokenHint")}</p>
+          {apiToken && (
+            <div className="flex items-center gap-2">
+              <input className="input flex-1 font-mono text-xs" readOnly value={apiToken} onFocus={(e) => e.target.select()} />
+              <button className="btn-ghost !px-2" onClick={() => void copyToken()} aria-label={t("positions.copyToken")}>
+                {copied ? <Check size={15} className="text-green-500" /> : <Copy size={15} />}
+              </button>
+            </div>
+          )}
+          {apiToken && (
+            <p className="break-all text-xs text-slate-400">
+              GET {window.location.origin}/api/external/position?token={apiToken}
+            </p>
+          )}
+          <button className="btn-ghost" onClick={() => void generateToken()}>
+            {apiToken ? t("positions.regenerateToken") : t("positions.generateToken")}
           </button>
         </section>
       )}

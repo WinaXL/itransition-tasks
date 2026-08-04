@@ -36,6 +36,9 @@ const en = {
     createCv: "Create my CV", openCv: "Open my CV", cvsTab: "Submitted CVs", overview: "Overview",
     average: "Average", candidate: "Candidate", likes: "Likes", noCvs: "No published CVs yet",
     writeComment: "Write a comment (Markdown supported)…", send: "Send",
+    apiToken: "External API token",
+    apiTokenHint: "Read-only access to this position's aggregated results (e.g. for the Odoo import). Only data of this position is accessible with the token.",
+    generateToken: "Generate token", regenerateToken: "Regenerate token", copyToken: "Copy token",
   },
   attrs: {
     title: "Attribute Library", newAttribute: "New attribute", options: "Options (one per line)",
@@ -82,6 +85,25 @@ const en = {
     title: "Achievements", download: "Download SVG",
     projects: "{{n}} projects", cvs: "{{n}} CVs", likes: "{{n}} likes",
   },
+  crm: {
+    title: "CRM (Salesforce)", action: "Sync to CRM", updateAction: "Update in CRM",
+    hint: "Creates an Account with a linked Contact in Salesforce using your profile data and the details below.",
+    company: "Company / Account name", phone: "Phone", jobTitle: "Job title", industry: "Industry",
+    website: "Website", notes: "Notes for the CRM record", submit: "Send to Salesforce",
+    created: "Account and Contact created in Salesforce.", updated: "Salesforce records updated.",
+    alreadySynced: "Already in CRM:", notConfigured: "Salesforce is not configured on the server (SF_CLIENT_ID / SF_CLIENT_SECRET).",
+    failed: "Salesforce sync failed. {{detail}}",
+  },
+  support: {
+    title: "Create support ticket", link: "Create support ticket",
+    hint: "Describe the problem — the ticket is uploaded to Dropbox and a Power Automate flow notifies the admins.",
+    summary: "Summary of the problem…", priority: "Priority",
+    priorities: { High: "High", Average: "Average", Low: "Low" },
+    submit: "Submit ticket", success: "Ticket submitted. The admins have been notified.",
+    failed: "Could not submit the ticket. Please try again.",
+    notConfigured: "Dropbox is not configured on the server (DROPBOX_* variables).",
+    signInFirst: "Please sign in to create a ticket.",
+  },
 };
 
 // Russian translation of the same keys.
@@ -120,6 +142,9 @@ const ru: typeof en = {
     createCv: "Создать моё резюме", openCv: "Открыть моё резюме", cvsTab: "Поданные резюме", overview: "Обзор",
     average: "Среднее", candidate: "Кандидат", likes: "Лайки", noCvs: "Опубликованных резюме пока нет",
     writeComment: "Напишите комментарий (поддерживается Markdown)…", send: "Отправить",
+    apiToken: "Токен внешнего API",
+    apiTokenHint: "Доступ только на чтение к агрегированным результатам этой позиции (например, для импорта в Odoo). По токену доступны данные только этой позиции.",
+    generateToken: "Сгенерировать токен", regenerateToken: "Перегенерировать токен", copyToken: "Скопировать токен",
   },
   attrs: {
     title: "Библиотека атрибутов", newAttribute: "Новый атрибут", options: "Варианты (по одному в строке)",
@@ -165,6 +190,25 @@ const ru: typeof en = {
   badges: {
     title: "Достижения", download: "Скачать SVG",
     projects: "{{n}} проектов", cvs: "{{n}} резюме", likes: "{{n}} лайков",
+  },
+  crm: {
+    title: "CRM (Salesforce)", action: "Отправить в CRM", updateAction: "Обновить в CRM",
+    hint: "Создаёт в Salesforce аккаунт (Account) со связанным контактом (Contact) из данных профиля и полей ниже.",
+    company: "Компания / название аккаунта", phone: "Телефон", jobTitle: "Должность", industry: "Отрасль",
+    website: "Сайт", notes: "Заметки для записи в CRM", submit: "Отправить в Salesforce",
+    created: "Account и Contact созданы в Salesforce.", updated: "Записи в Salesforce обновлены.",
+    alreadySynced: "Уже в CRM:", notConfigured: "Salesforce не настроен на сервере (SF_CLIENT_ID / SF_CLIENT_SECRET).",
+    failed: "Не удалось выполнить синхронизацию с Salesforce. {{detail}}",
+  },
+  support: {
+    title: "Создать тикет в поддержку", link: "Создать тикет в поддержку",
+    hint: "Опишите проблему — тикет загружается в Dropbox, а поток Power Automate уведомляет администраторов.",
+    summary: "Кратко опишите проблему…", priority: "Приоритет",
+    priorities: { High: "Высокий", Average: "Средний", Low: "Низкий" },
+    submit: "Отправить тикет", success: "Тикет отправлен. Администраторы уведомлены.",
+    failed: "Не удалось отправить тикет. Попробуйте ещё раз.",
+    notConfigured: "Dropbox не настроен на сервере (переменные DROPBOX_*).",
+    signInFirst: "Войдите, чтобы создать тикет.",
   },
 };
 
